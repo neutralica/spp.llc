@@ -1,0 +1,13 @@
+
+# node deps
+node_modules/
+
+# vite caches
+**/.vite/
+
+.DS_Store
+_archive-delete/
+
+
+# dist/
+dist/
