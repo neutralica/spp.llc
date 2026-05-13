@@ -11,6 +11,7 @@ export const _TXT = {
   smol: "0.75rem",
   sansMain: "1.1rem",
   main: "1.1rem",
+  subheading: "1.5rem",
   heading: "5.1rem",
 } as const;
 
