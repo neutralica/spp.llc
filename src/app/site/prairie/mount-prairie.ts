@@ -89,7 +89,7 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   /* logo & menu */
   const menuPanel = mk_div_id(pageHost, "menu-panel").css.setMany(panelCss);
   const contentPanel = mk_div_id(pageHost, "content-panel").css.setMany(panelCss);
-  const box = mk_div_id(menuPanel, "menu-box");
+  const box = mk_div_id(menuPanel, "menu-box").css.setMany({marginTop: "25%", marginLeft: "2rem"});
   const logo = box.create.span().text.set("spp.").css.setMany(logoCss);
 
   const contentBox = makeContentBox();
