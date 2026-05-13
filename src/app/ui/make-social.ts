@@ -1,7 +1,12 @@
 import { hson } from "hson-live";
 import { OKLCH_ACID_WASHED } from "../core/consts/oklch";
 import { $insta_d, $threads_d } from "./icon-svg-helpers";
-import { frameBase } from "../site/prairie/mount-prairie";
+
+ const strokeline = {
+  strokeWidth: "1",
+  vectorEffect: "non-scaling-stroke",
+} as const;
+
 
 export function makeSocialBox() {
 
@@ -21,7 +26,7 @@ export function makeSocialBox() {
       fill: OKLCH_ACID_WASHED.straw,
       // stroke: OKLCH_ACID_WASHED.straw,
     })
-    .css.setMany(frameBase);
+    .css.setMany(strokeline);
 
   socialHost.create.svg().attr.setMany({ viewBox: "0 0 640 640", })
     .create.path().attr.setMany({
@@ -29,7 +34,7 @@ export function makeSocialBox() {
       fill: OKLCH_ACID_WASHED.straw,
       // stroke: OKLCH_ACID_WASHED.straw,
     })
-    .css.setMany(frameBase);
+    .css.setMany(strokeline);
 
   return socialHost;
 }

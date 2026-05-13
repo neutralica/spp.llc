@@ -19,10 +19,6 @@ const rng360 = rn() * 360;
 type menuOpts = "shop" | "terroir" | "tour" | "about";
 
 /* svg attrs & css */
-export const frameBase = {
-  strokeWidth: "1",
-  vectorEffect: "non-scaling-stroke",
-} as const;
 
 export const menuFxCss: CssMap = {
   userSelect: "none",
@@ -36,7 +32,6 @@ const panelCss = {
   height: "100%",
   justifySelf: "stretch",
   inset: "0",
-  padding: "10%"
 }
 
 const logoCss = {
@@ -69,7 +64,7 @@ const skyColor2 = `linear-gradient(${rng360}deg, hsl(210 45% 22%), hsl(210 45% 1
 export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   stage.empty();
   let view: menuOpts | null = null;
-  
+
   /* prairie svg host */
   const prairieHost = mk_div_id(stage, "prairie-host")
     .css.setMany({
@@ -96,10 +91,13 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   const contentPanel = mk_div_id(pageHost, "content-panel").css.setMany(panelCss);
   const box = mk_div_id(menuPanel, "menu-box");
   const logo = box.create.span().text.set("spp.").css.setMany(logoCss);
+
   const contentBox = makeContentBox();
   contentPanel.append(contentBox.box);
+  contentBox.hide();
 
-  pageHost.append(makeSocialBox());
+  const socialBox = makeSocialBox()
+  pageHost.append(socialBox);
 
   const aboutBtn = mk_span_txt(box, "about").css.setMany(menuTxtCss);
   const shopBtn = mk_span_txt(box, "shop").css.setMany(menuTxtCss);
@@ -109,12 +107,12 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   keys_of(btns).forEach(b => {
     btns[b].listen.onPointerDown(() => {
       if (view !== b) {
-        contentBox.setContent(b, _content[b].txt);
+        contentBox.setContent(_content[b].head, _content[b].txt);
         view = b;
       } else {
         contentBox.hide();
         view = null;
-     }
+      }
     })
   })
 

@@ -3,29 +3,43 @@ import { OKLCH_ACID_WASHED } from "../core/consts/oklch";
 import { _TXT } from "../core/consts/ui-consts";
 import { set_alpha } from "../core/helpers/color-helpers";
 import { mk_div_cls } from "../utils/makers";
-import { frameBase } from "../site/prairie/mount-prairie";
 import { main } from "../../main";
 
+ const frameBase = {
+  strokeWidth: "1",
+  vectorEffect: "non-scaling-stroke",
+} as const;
+
+
 export function makeContentBox() {
-  const box = hson.liveTree.create.div()
-    .classlist.set("content box")
-    .css.setMany({
-      position: "absolute",
-      height: "100%",
-      width: "100%",
-      inset: "0",
-    });
-  const frame = box.create.svg()
-    .attr.setMany({
-      "viewBox": "0 0 100 100",
-      "preserveAspectRatio": "none",
-    })
-    .css.setMany({
-      position: "absolute",
-      inset: "0",
-      margin: "2rem",
-      pointerEvents: "none"
-    });
+ const box = hson.liveTree.create.div()
+  .classlist.set("content box")
+  .css.setMany({
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    gridColumn: "2",
+    width: "100%",
+    height: "100%",
+    minWidth: "0",
+    minHeight: "0",
+  });
+
+const frame = box.create.svg()
+  .attr.setMany({
+    viewBox: "0 0 100 100",
+    preserveAspectRatio: "none",
+  })
+  .css.setMany({
+    position: "absolute",
+    inset: "0",
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    overflow: "visible",
+    backdropFilter:  "blur(15px)",
+    // backdropFilter: "saturate(100%)"
+  });
 
   const path = `
       M 10 0
@@ -70,25 +84,31 @@ export function makeContentBox() {
   const header = mk_div_cls(box, "box-header")
     .css.setMany({
       position: "absolute",
-      top: "3rem",
+      textAlign: "center",
+      top: "2rem",
       justifySelf: "center",
       fontSize: _TXT.subheading,
       color: OKLCH_ACID_WASHED.straw,
       fontWeight: "600",
+      left: "50%",
+      transform: "translateX(-50%)",
     });
+  
   const content = mk_div_cls(box, "box-content")
     .css.setMany({
       position: "absolute",
-      top: "4rem",
-      bottom: "16rem",
-      left: "50%",
-      transform: "translateX(-50%)",
-
-      width: "min(60ch, calc(100% - 10rem))",
+      // top: "4rem",
+      // bottom: "16rem",
+      // left: "50%",
+      // transform: "translateX(-50%)",
+inset: "100px 50px",
+      // width: "min(60ch, calc(100% - 10rem))",
       overflowY: "auto",
+      mixBlendMode: "color-dodge",
 
-      marginTop: "3rem",
-      marginBottom: "3rem",
+      // maxHeight: "500px",
+      // marginTop: "3rem",
+      // marginBottom: "3rem",
       letterSpacing: "1.9px",
       fontFamily: "serif",
       color: OKLCH_ACID_WASHED.straw,
@@ -97,7 +117,7 @@ export function makeContentBox() {
 
 
   const hide = () => { box.css.set.display("none"); };
-  const unhide = () => { box.css.set.display("block"); };
+  const unhide = () => { box.css.set.display("flex"); };
 
   const setHeader = (headtxt: string) => {
     unhide();
