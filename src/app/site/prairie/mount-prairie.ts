@@ -1,16 +1,17 @@
 // mount-prairie-phase.ts
 
-import { hson, LiveTree } from "hson-live";
+import { LiveTree } from "hson-live";
 import { prairie_factory } from "./prairie.js";
 import { mk_div_id, mk_span_cls, mk_span_txt } from "../../utils/makers.js";
 import { _TXT, SYS_SERIFfont } from "../../core/consts/ui-consts.js";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS } from "../../core/consts/oklch.js";
 import type { CssMap } from "hson-live/types";
 import { _rng_xs32, keys_of } from "../../utils/helpers.js";
-import { $insta_d, $insta_icon, $threads_d, $threads_icon } from "../../ui/icon-svg-helpers.js";
+import { $insta_icon, $threads_icon } from "../../ui/icon-svg-helpers.js";
 import { relay, type OutcomeAsync } from "intrastructure";
 import { _content } from "../content/content.js";
 import { makeContentBox } from "../../ui/make-content-box.js";
+import { makeSocialBox } from "../../ui/make-social.js";
 
 
 const rn = _rng_xs32(Math.random() * 9999);
@@ -140,33 +141,3 @@ function getContent(b: string) {
 
 }
 
-function makeSocialBox() {
-
-  const socialHost = hson.liveTree.create.div()
-    .id.set("social-host")
-    .css.setMany({
-      display: "flex",
-      position: "fixed",
-      bottom: "1rem",
-      left: "1rem",
-      height: "32px",
-      width: "100px",
-    });
-  socialHost.create.svg().attr.setMany({ viewBox: "0 0 640 640", })
-    .create.path().attr.setMany({
-      d: $insta_d,
-      fill: OKLCH_ACID_WASHED.straw,
-      // stroke: OKLCH_ACID_WASHED.straw,
-    })
-    .css.setMany(frameBase);
-
-  socialHost.create.svg().attr.setMany({ viewBox: "0 0 640 640", })
-    .create.path().attr.setMany({
-      d: $threads_d,
-      fill: OKLCH_ACID_WASHED.straw,
-      // stroke: OKLCH_ACID_WASHED.straw,
-    })
-    .css.setMany(frameBase);
-
-  return socialHost;
-}

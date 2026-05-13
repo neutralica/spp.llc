@@ -78,18 +78,21 @@ export function makeContentBox() {
     });
   const content = mk_div_cls(box, "box-content")
     .css.setMany({
+      position: "absolute",
+      top: "4rem",
+      bottom: "16rem",
+      left: "50%",
+      transform: "translateX(-50%)",
+
+      width: "min(60ch, calc(100% - 10rem))",
+      overflowY: "auto",
+
       marginTop: "3rem",
       marginBottom: "3rem",
       letterSpacing: "1.9px",
-      fontFamily: "Serif",
+      fontFamily: "serif",
       color: OKLCH_ACID_WASHED.straw,
       fontSize: _TXT.main,
-      position: "absolute",
-      maxWidth: "60ch",
-      justifySelf: "center",
-      top: "4rem",
-      bottom: "16rem",
-      overflowY: "auto",
     });
 
 
@@ -115,6 +118,6 @@ export function makeContentBox() {
     if (col === "off" || col === "none") { col = "transparent" }
     frame.css.set.background(col);
   }
-  return { box, setContent, setText, setBackColor,  hide, unhide };
+  return { box, setContent, setText, setBackColor, hide, unhide };
 
 }
