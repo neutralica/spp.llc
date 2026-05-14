@@ -90,8 +90,9 @@ const frame = box.create.svg()
       fontSize: _TXT.subheading,
       color: OKLCH_ACID_WASHED.straw,
       fontWeight: "600",
-      left: "50%",
-      transform: "translateX(-50%)",
+      // left: "50%",
+      width: "90%",
+      // transform: "translateX(-50%)",
     });
   
   const content = mk_div_cls(box, "box-content")

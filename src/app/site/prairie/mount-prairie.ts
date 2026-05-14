@@ -1,8 +1,8 @@
 // mount-prairie-phase.ts
 
-import { LiveTree } from "hson-live";
+import { CssManager, LiveTree } from "hson-live";
 import { prairie_factory } from "./prairie.js";
-import { mk_div_id, mk_span_cls, mk_span_txt } from "../../utils/makers.js";
+import { mk_div_id, mk_span_cls, mk_span_cls_txt, mk_span_id, mk_span_txt } from "../../utils/makers.js";
 import { _TXT, SYS_SERIFfont } from "../../core/consts/ui-consts.js";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS } from "../../core/consts/oklch.js";
 import type { CssMap } from "hson-live/types";
@@ -12,6 +12,7 @@ import { relay, type OutcomeAsync } from "intrastructure";
 import { _content } from "../content/content.js";
 import { makeContentBox } from "../../ui/make-content-box.js";
 import { makeSocialBox } from "../../ui/make-social.js";
+import { set_global_css } from "./global-css.js";
 
 
 const rn = _rng_xs32(Math.random() * 9999);
@@ -89,8 +90,12 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   /* logo & menu */
   const menuPanel = mk_div_id(pageHost, "menu-panel").css.setMany(panelCss);
   const contentPanel = mk_div_id(pageHost, "content-panel").css.setMany(panelCss);
-  const box = mk_div_id(menuPanel, "menu-box").css.setMany({marginTop: "25%", marginLeft: "2rem"});
-  const logo = box.create.span().text.set("spp.").css.setMany(logoCss);
+  const box = mk_div_id(menuPanel, "menu-box").css.setMany({ marginTop: "25%", marginLeft: "2rem" });
+  const logo = mk_span_cls(box, "logo").text.set("spp.").css.setMany({
+    ...logoCss,
+    gridColumn: "1",
+    gridRow: "1"
+  });
 
   const contentBox = makeContentBox();
   contentPanel.append(contentBox.box);
@@ -99,10 +104,14 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   const socialBox = makeSocialBox()
   pageHost.append(socialBox);
 
-  const aboutBtn = mk_span_txt(box, "about").css.setMany(menuTxtCss);
-  const shopBtn = mk_span_txt(box, "shop").css.setMany(menuTxtCss);
-  const tourBtn = mk_span_txt(box, "tour").css.setMany(menuTxtCss);
-  const terroirBtn = mk_span_txt(box, "terroir").css.setMany(menuTxtCss);
+  const linkBox = mk_span_id(box, "link-box").css.setMany({
+    gridColumn: "2",
+    gridRow: "1",
+  });
+  const aboutBtn = mk_span_cls_txt(linkBox, "menu-link", "about").css.setMany(menuTxtCss);
+  const shopBtn = mk_span_cls_txt(linkBox, "menu-link", "shop").css.setMany(menuTxtCss);
+  const tourBtn = mk_span_cls_txt(linkBox, "menu-link", "tour").css.setMany(menuTxtCss);
+  const terroirBtn = mk_span_cls_txt(linkBox, "menu-link", "terroir").css.setMany(menuTxtCss);
   const btns: Record<menuOpts, LiveTree> = { shop: shopBtn, about: aboutBtn, tour: tourBtn, terroir: terroirBtn };
   keys_of(btns).forEach(b => {
     btns[b].listen.onPointerDown(() => {
@@ -130,7 +139,7 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
     opacity: "0.4",
     fontStyle: "italic",
   });
-
+  set_global_css();
   return relay.ok();
 }
 
