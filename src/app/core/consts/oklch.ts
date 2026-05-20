@@ -27,16 +27,24 @@ export const OKLCH_VIBRANT = {
   yellowSodium: "oklch(0.8 0.170 100)", // streetlight yellow
   yellowCanary: "oklch(0.90 0.160 100)", // bright signal yellow
   yellowVolt: "oklch(0.86 0.200 105)", // electric yellow spike
-  yellowSunStaringEyesBright: "oklch(0.75 0.01 100)", // electric yellow spike
+  yellowBrightEyesStaringSun: "oklch(0.75 0.01 100)", // electric yellow spike
 
 
-  // --- yellow-greens / greens ---
+  // --- greens-adjacent ---
   limeChartreuse: "oklch(0.84 0.180 115)", // yellow-green bridge color
   limeAcid: "oklch(0.84 0.175 125)", // synthetic acid lime
   mossToxic: "oklch(0.72 0.100 145)", // murky cyberpunk green
   fernStatic: "oklch(0.76 0.095 160)", // greener cool accent
   mintIce: "oklch(0.70 0.10 175)", // pale mint-green
-
+  dragonScale: "oklch(0.62 0.145 138)", // rich scaled green, less yellow than lime
+  dragonGlass: "oklch(0.68 0.155 132)", // bright lacquered green
+  wyrmVerdigris: "oklch(0.58 0.125 150)", // blue-leaning oxidized green
+  basiliskGreen: "oklch(0.64 0.175 142)", // dangerous vivid green
+  jadeVenom: "oklch(0.70 0.150 150)", // polished jade / toxic glass
+  lizardIon: "oklch(0.74 0.165 135)", // energetic yellow-green without going full lime
+  dragonHide: "oklch(0.48 0.105 138)", // deep leathery green
+  oldMalachite: "oklch(0.52 0.120 148)", // mineral green, grounded
+  serpentMoss: "oklch(0.45 0.090 132)", // dirty dragon green
 
   // --- cyans ---
   cyanSeaLaser: "oklch(0.74 0.125 190)", // vivid cyan accent
@@ -85,6 +93,19 @@ export const OKLCH_NEUTRALS = {
   frost: "oklch(0.82 0.010 260)", // bright UI text
   paper: "oklch(0.82 0.02 260)", // light surfaces
 
+  /* beige-brown conteingent */
+ pearlIvory: "oklch(94% 0.025 92)",
+  oldPaper: "oklch(90% 0.035 88)",
+  strawWash: "oklch(86% 0.052 86)",
+  paleVellum: "oklch(82% 0.040 78)",
+  champagneAsh: "oklch(76% 0.045 78)",
+  mothTaupe: "oklch(68% 0.035 70)",
+  dryReed: "oklch(62% 0.055 75)",
+  mutedOchre: "oklch(56% 0.072 72)",
+  tarnishedBrass: "oklch(50% 0.070 77)",
+  tobaccoBrown: "oklch(42% 0.060 64)",
+  smokedUmber: "oklch(34% 0.045 58)",
+  walnutBlack: "oklch(24% 0.030 55)",
 
   // --- tinted neutrals (subtle personality) ---
   blueTint: "oklch(0.70 0.020 240)", // cool UI wash
@@ -126,7 +147,16 @@ export const OKLCH_ACID_WASHED = {
   twilight: "oklch(0.68 0.045 280)",
 };
 
-
+export const OKLCH_FOREST = {
+  blackPine: "oklch(13% 0.025 155)",
+  deepMossBlack: "oklch(16% 0.035 145)",
+  spruceNight: "oklch(18% 0.040 158)",
+  laurelShadow: "oklch(20% 0.035 135)",
+  bottleGlass: "oklch(22% 0.045 165)",
+  wetFern: "oklch(25% 0.050 148)",
+  oldHedge: "oklch(28% 0.045 138)",
+  cypressInk: "oklch(17% 0.030 172)",
+} as const;
 
 export const OKLCH_FLEURS = {
     greyLilac: "oklch(0.75 0.06 280)",

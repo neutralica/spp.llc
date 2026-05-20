@@ -55,12 +55,12 @@ const bckAlpha = 1;
 export const bckColor = `rgba(${bckColorR}, ${bckColorG}, ${bckColorB}, ${bckAlpha})`;
 
 export const back_w_alpha = (num: number) => `rgba(${bckColorR}, ${bckColorG}, ${bckColorB}, ${num})`;
-export const odd_={
- oddYellow: "rgba(120, 180, 60, 1)",
- oddPurple: "rgba(170, 100, 230, 1)",
- oddPeriwinkle: "rgba(120, 180, 230, 1)",
- oddUmbre: "rgba(205, 145, 130, 1)",
- oddSeagreen: "rgba(90, 235, 170,1)",
+export const odd_ = {
+  oddYellow: "rgba(120, 180, 60, 1)",
+  oddPurple: "rgba(170, 100, 230, 1)",
+  oddPeriwinkle: "rgba(120, 180, 230, 1)",
+  oddUmbre: "rgba(205, 145, 130, 1)",
+  oddSeagreen: "rgba(90, 235, 170,1)",
 }
 
 export const _setBckgdAlpha = (n: number) => {
@@ -206,6 +206,13 @@ export const ACID_WASH_RGBA = {
 
   neonGhost: "rgba(120,240,210,0.70)",  // faint phosphor effect
   terminalGreen: "rgba(150,220,150,0.78)",
-
+  yellowThing: "rgba(238, 220, 158, 0.82)",
   dimWhite: "rgba(225,230,235,0.90)",
 };
+
+
+export const GILT_BANDScol = {
+  hi: "rgba(255, 248, 190, 0.75)",
+  mid: "rgba(232, 211, 126, 0.38)",
+  lo: "rgba(0, 0, 0, 0.42)"
+}

@@ -1,45 +1,29 @@
 import { hson } from "hson-live";
-import { OKLCH_ACID_WASHED } from "../core/consts/oklch";
-import { _TXT } from "../core/consts/ui-consts";
+import { OKLCH_ACID_WASHED, OKLCH_NEUTRALS } from "../core/consts/oklch";
 import { set_alpha } from "../core/helpers/color-helpers";
-import { mk_div_cls } from "../utils/makers";
-import { main } from "../../main";
+import { _create, type CreationPkg } from "../site/prairie/creator";
+import { cssCONTENT_HEADER, cssCONTENT_TXT, cssCONTENT_BOX, cssCONTENT_BACK, cssFRAME } from "./content.css";
 
- const frameBase = {
+const frameBase = {
   strokeWidth: "1",
   vectorEffect: "non-scaling-stroke",
+  fill: "none",
 } as const;
 
+const hdr: CreationPkg = { el: "div", cls: "box header", css: cssCONTENT_HEADER };  
+const cntTxt: CreationPkg = { el: "div", cls: "content text", css: cssCONTENT_TXT };
 
 export function makeContentBox() {
- const box = hson.liveTree.create.div()
-  .classlist.set("content box")
-  .css.setMany({
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    gridColumn: "2",
-    width: "100%",
-    height: "100%",
-    minWidth: "0",
-    minHeight: "0",
-  });
+  const tree = hson.liveTree.create.div()
+    .classlist.set("content box")
+    .css.setMany(cssCONTENT_BOX);
 
-const frame = box.create.svg()
-  .attr.setMany({
-    viewBox: "0 0 100 100",
-    preserveAspectRatio: "none",
-  })
-  .css.setMany({
-    position: "absolute",
-    inset: "0",
-    width: "100%",
-    height: "100%",
-    pointerEvents: "none",
-    overflow: "visible",
-    backdropFilter:  "blur(15px)",
-    // backdropFilter: "saturate(100%)"
-  });
+  const frame = tree.create.svg()
+    .attr.setMany({
+      viewBox: "0 0 100 100",
+      preserveAspectRatio: "none",
+    })
+    .css.setMany(cssFRAME);
 
   const path = `
       M 10 0
@@ -54,12 +38,17 @@ const frame = box.create.svg()
       Z
     `;
 
-
+  frame.create.path()
+    .attr.setMany({
+      d: path,
+      fill: OKLCH_NEUTRALS.smokedUmber,
+      stroke: "none",
+    })
+    .css.setMany(cssCONTENT_BACK);
   frame.create.path()
     .attr.setMany({
       d: path,
       ...frameBase,
-      fill: "none",
       stroke: set_alpha(OKLCH_ACID_WASHED.straw, 0.9),
     });
 
@@ -67,7 +56,6 @@ const frame = box.create.svg()
     .attr.setMany({
       d: path,
       ...frameBase,
-      fill: "none",
       stroke: set_alpha(OKLCH_ACID_WASHED.straw, 0.5),
       transform: "translate(-0.6 -0.6)",
     });
@@ -76,49 +64,16 @@ const frame = box.create.svg()
     .attr.setMany({
       d: path,
       ...frameBase,
-      fill: "none",
       stroke: set_alpha(OKLCH_ACID_WASHED.straw, 0.3),
       transform: "translate(0.8 0.8)",
     });
 
-  const header = mk_div_cls(box, "box-header")
-    .css.setMany({
-      position: "absolute",
-      textAlign: "center",
-      top: "2rem",
-      justifySelf: "center",
-      fontSize: _TXT.subheading,
-      color: OKLCH_ACID_WASHED.straw,
-      fontWeight: "600",
-      // left: "50%",
-      width: "90%",
-      // transform: "translateX(-50%)",
-    });
-  
-  const content = mk_div_cls(box, "box-content")
-    .css.setMany({
-      position: "absolute",
-      // top: "4rem",
-      // bottom: "16rem",
-      // left: "50%",
-      // transform: "translateX(-50%)",
-inset: "100px 50px",
-      // width: "min(60ch, calc(100% - 10rem))",
-      overflowY: "auto",
-      mixBlendMode: "color-dodge",
-
-      // maxHeight: "500px",
-      // marginTop: "3rem",
-      // marginBottom: "3rem",
-      letterSpacing: "1.9px",
-      fontFamily: "serif",
-      color: OKLCH_ACID_WASHED.straw,
-      fontSize: _TXT.main,
-    });
+  const header = _create(tree, hdr);
+  const content = _create(tree,cntTxt);
 
 
-  const hide = () => { box.css.set.display("none"); };
-  const unhide = () => { box.css.set.display("flex"); };
+  const hide = () => { tree.css.set.display("none"); };
+  const unhide = () => { tree.css.set.display("flex"); };
 
   const setHeader = (headtxt: string) => {
     unhide();
@@ -139,6 +94,6 @@ inset: "100px 50px",
     if (col === "off" || col === "none") { col = "transparent" }
     frame.css.set.background(col);
   }
-  return { box, setContent, setText, setBackColor, hide, unhide };
+  return { tree, setContent, setText, setBackColor, hide, unhide };
 
-}
+};

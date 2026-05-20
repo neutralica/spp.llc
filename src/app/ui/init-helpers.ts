@@ -70,7 +70,7 @@ export function split_inline_backticks(src: string): InlineSeg[] {
 // one renderer for fenced code lines AND inline code segments.
 // - Handles comments, parens, dot, equals, and double quotes.
 // - Preserves whitespace (assumes container/row has whiteSpace: "pre"; white-space is inherited).
-export function render_inline_code(row: LiveTree, code: string): void {
+export function render_code(row: LiveTree, code: string): void {
   // base “ink” so code isn’t dependent on outer containers.
   const BASEcss: CssMap = {};
   const BRACEcss: CssMap = {};
@@ -282,7 +282,7 @@ export function render_inline(host: LiveTree, src: string): void {
     // seg.kind === "code": render backticks + styled content
     const wrap = host.create.span().classlist.add("md-icode-wrap");
     // wrap.create.span().css.setMany(INLINE_TICKcss).text.set("`");
-    render_inline_code(wrap, seg.s);
+    render_code(wrap, seg.s);
     // wrap.create.span().css.setMany(INLINE_TICKcss).text.set("`");
   }
 }
@@ -373,7 +373,7 @@ export function render_line_with_comment(
   const split = split_trailing_comment(line);
 
   if (!split) {
-    if (mode === "code") render_inline_code(host, line);
+    if (mode === "code") render_code(host, line);
     else render_inline(host, line);
     return;
   }
@@ -381,7 +381,7 @@ export function render_line_with_comment(
   const { body, comment } = split;
 
   if (body.length > 0) {
-    if (mode === "code") render_inline_code(host, body);
+    if (mode === "code") render_code(host, body);
     else render_inline(host, body);
   }
 

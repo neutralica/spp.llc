@@ -1,3 +1,4 @@
+import { _rng_xs32 } from "../../utils/helpers";
 import type { PrairieConfig, PrairieRowStatic } from "./prairie.types";
 
 /**
@@ -40,7 +41,7 @@ export function default_prairie_config(width: number, height: number): PrairieCo
 
     flowerBloomWindowSec: 1,
 
-    seed: 1337,
+    seed: Math.random() * 999,
   };
 }
 // -----------------------------
@@ -67,4 +68,6 @@ export function row_wind_x(row: PrairieRowStatic, x: number, timeSec: number): n
 
   return windA + windB;
 }
+export const rn = _rng_xs32(Math.random() * 9999);
+export const rng360 = () => rn() * 360;
 

@@ -4,115 +4,66 @@ import { CssManager, LiveTree } from "hson-live";
 import { prairie_factory } from "./prairie.js";
 import { mk_div_id, mk_span_cls, mk_span_cls_txt, mk_span_id, mk_span_txt } from "../../utils/makers.js";
 import { _TXT, SYS_SERIFfont } from "../../core/consts/ui-consts.js";
-import { OKLCH_ACID_WASHED, OKLCH_FLEURS } from "../../core/consts/oklch.js";
-import type { CssMap } from "hson-live/types";
-import { _rng_xs32, keys_of } from "../../utils/helpers.js";
-import { $insta_icon, $threads_icon } from "../../ui/icon-svg-helpers.js";
+import { cssCONTROL_PANEL, cssGILT_TEXT, cssHSON_BYLINE, cssLINK_BOX, cssLOGO, cssMENU_BOX, cssMENU_BTN_TXT, cssPAGE_HOST, cssPANEL, cssPRAIRIE_HOST, cssPRAIRIE_MASK, cssSCENE } from "../../core/consts/main.css.js";
+import { keys_of } from "../../utils/helpers.js";
 import { relay, type OutcomeAsync } from "intrastructure";
-import { _content } from "../content/content.js";
+import { _content } from "../content/lorem-ipsum.js";
 import { makeContentBox } from "../../ui/make-content-box.js";
 import { makeSocialBox } from "../../ui/make-social.js";
 import { set_global_css } from "./global-css.js";
+import { _create, type CreationPkg } from "./creator.js";
 
 
-const rn = _rng_xs32(Math.random() * 9999);
-const rng360 = rn() * 360;
-type menuOpts = "shop" | "terroir" | "tour" | "about";
+export type MenuOpts = "shop" | "terroir" | "tour" | "about";
 
-/* svg attrs & css */
+export const MENU_OPTS: Record<MenuOpts, MenuOpts> = { shop: "shop", terroir: "terroir", tour: "tour", about: "about" };
 
-export const menuFxCss: CssMap = {
-  userSelect: "none",
-  textShadow: "0 0 5px " + OKLCH_FLEURS.pollen,
-}
-
-/* menu, content panels */
-const panelCss = {
-  position: "relative",
-  alignSelf: "start",
-  height: "100%",
-  justifySelf: "stretch",
-  inset: "0",
-}
-
-const logoCss = {
-  ...menuFxCss,
-  fontSize: _TXT.heading,
-  fontFamily: SYS_SERIFfont,
-  color: OKLCH_ACID_WASHED.straw,
-  fontStyle: "italic",
-};
-
-const menuTxtCss: CssMap = {
-  ...menuFxCss,
-  marginLeft: "3rem",
-  letterSpacing: "1.9px",
-  fontSize: _TXT.main,
-  fontFamily: "Serif",
-  color: OKLCH_ACID_WASHED.straw,
-  cursor: "pointer",
-  lineHeight: "1.5rem ",
-  _hover: {
-    borderTop: "2px solid " + OKLCH_ACID_WASHED.straw,
-    borderBottom: "2px solid " + OKLCH_ACID_WASHED.straw,
-  }
-
-};
-
-const skyColor = "hsl(210 45% 12%)";
-const skyColor2 = `linear-gradient(${rng360}deg, hsl(210 45% 22%), hsl(210 45% 12%))`;
+const prrMskPkg: CreationPkg = { el: "div", id: "prairie-mask", css: cssPRAIRIE_MASK };
+const prrHost: CreationPkg = { el: "div", id: "prairie-host", css: cssPRAIRIE_HOST }
+const pgHost: CreationPkg = { el: "div", id: "page-host", css: cssPAGE_HOST };
+const mnPnl: CreationPkg = { el: "div", id: "menu-panel", css: cssPANEL }
+const cntPnl: CreationPkg = { el: "div", id: "content-panel", css: cssPANEL };
+const mnBx: CreationPkg = { el: "div", id: "menu-box", css: cssMENU_BOX };
+const sppLgo: CreationPkg = { el: "div", id: "spp-logo", txt: "spp.", css: cssLOGO };
+const lnkBx: CreationPkg = { id: "link-box", el: "span", css: cssLINK_BOX }
+const hsnTxt: CreationPkg = { el: "div", id: "hson-byline", txt: "~ made in hson-live ~", css: cssHSON_BYLINE }
+const btn: CreationPkg = { el: "span", cls: "menu-link", css: cssMENU_BTN_TXT };
 
 export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
-  stage.empty();
-  let view: menuOpts | null = null;
+  let view: MenuOpts | null = null;
+  stage.empty().css.setMany(cssSCENE)
 
   /* prairie svg host */
-  const prairieHost = mk_div_id(stage, "prairie-host")
-    .css.setMany({
-      position: "relative",
-      width: "100%",
-      height: "100%",
-      overflow: "hidden",
-      background: skyColor2,
-
-    });
+  const prairieHost = _create(stage, prrHost);
   prairie_factory(prairieHost);
 
-  /* ui layout */
-  const pageHost = mk_div_id(stage, "page-host")
-    .css.setMany({
-      position: "absolute",
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      inset: "0",
-    });
+  const prairieMask = _create(prairieHost, prrMskPkg);
+  /* ui container */
+  const pageHost = _create(stage, pgHost);
 
   /* logo & menu */
-  const menuPanel = mk_div_id(pageHost, "menu-panel").css.setMany(panelCss);
-  const contentPanel = mk_div_id(pageHost, "content-panel").css.setMany(panelCss);
-  const box = mk_div_id(menuPanel, "menu-box").css.setMany({ marginTop: "25%", marginLeft: "2rem" });
-  const logo = mk_span_cls(box, "logo").text.set("spp.").css.setMany({
-    ...logoCss,
-    gridColumn: "1",
-    gridRow: "1"
-  });
+  const menuPanel = _create(pageHost, mnPnl);
+  const contentPanel = _create(pageHost, cntPnl);
+  const menuBox = _create(menuPanel, mnBx);
+  const logo = _create(menuBox, sppLgo);
 
+  /* social & content containers */
   const contentBox = makeContentBox();
-  contentPanel.append(contentBox.box);
   contentBox.hide();
+  contentPanel.append(contentBox.tree);
+  pageHost.append(makeSocialBox());
 
-  const socialBox = makeSocialBox()
-  pageHost.append(socialBox);
+  /* menu buttons */
+  const linkBox = _create(menuBox, lnkBx);
+  const hsonByline = _create(stage, hsnTxt);
 
-  const linkBox = mk_span_id(box, "link-box").css.setMany({
-    gridColumn: "2",
-    gridRow: "1",
-  });
-  const aboutBtn = mk_span_cls_txt(linkBox, "menu-link", "about").css.setMany(menuTxtCss);
-  const shopBtn = mk_span_cls_txt(linkBox, "menu-link", "shop").css.setMany(menuTxtCss);
-  const tourBtn = mk_span_cls_txt(linkBox, "menu-link", "tour").css.setMany(menuTxtCss);
-  const terroirBtn = mk_span_cls_txt(linkBox, "menu-link", "terroir").css.setMany(menuTxtCss);
-  const btns: Record<menuOpts, LiveTree> = { shop: shopBtn, about: aboutBtn, tour: tourBtn, terroir: terroirBtn };
+  const btns: Record<MenuOpts, LiveTree> = {
+    shop: _create(linkBox, btn).text.set("shop"),
+    about: _create(linkBox, btn).text.set("about"),
+    tour: _create(linkBox, btn).text.set("tour"),
+    terroir: _create(linkBox, btn).text.set("terroir"),
+  };
+
   keys_of(btns).forEach(b => {
     btns[b].listen.onPointerDown(() => {
       if (view !== b) {
@@ -125,23 +76,13 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
     })
   })
 
-  stage.create.div().text.set("~ made in hson-live ~").css.setMany({
-    position: "fixed",
-    bottom: "1rem",
-    right: "1rem",
-    display: "flex",
-    alignSelf: "end",
-    marginLeft: "6rem",
-    fontSize: _TXT.smol,
-    fontFamily: SYS_SERIFfont,
-    color: skyColor,
-    letterSpacing: "2px",
-    opacity: "0.4",
-    fontStyle: "italic",
-  });
   set_global_css();
   return relay.ok();
+
 }
+
+
+
 
 function getContent(b: string) {
 

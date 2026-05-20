@@ -1,25 +1,24 @@
 import type { LiveTree } from "hson-live";
 import { type ListItem, type ListKind, render_line_with_comment, extractUrl, parse_list_item, isIndented } from "./init-helpers";
 import type { CssMap } from "hson-live/types";
+import { SPP_MD_ANTI_LIST_ITEMcss, SPP_MD_COPY_LINEcss, SPP_MD_HEADERcss, SPP_MD_HRcss, SPP_MD_LINK_LINEcss, SPP_MD_LIST_ITEMcss, SPP_MD_LISTcss, SPP_MD_PARAGRAPHcss, SPP_MD_WARNINGcss } from "./markdown.css";
 
 // -----------------------------
 // Markdown-ish renderer (only touch: flushPara + flushList use render_inline)
 // -----------------------------
 
 
-export const ABOUT_P_TEXTcss = {};
-export const ABOUT_LIST_MARKERcss= {};
-export const ABOUT_LIST_ROWcss= {};
-export const LIST_TEXTcss= {};
-export const MD_LINK_LINEcss= {};
-export const MD_COPY_LINEcss= {};
-export const ANTI_LIST_MARKERcss= {};
-export const ANTI_LIST_TEXTcss= {};
+// export const ABOUT_P_TEXTcss = {};
+// export const ABOUT_LIST_MARKERcss = {};
+// export const ABOUT_LIST_ROWcss = {};
+// export const LIST_TEXTcss = {};
+// export const MD_LINK_LINEcss = {};
+// export const MD_COPY_LINEcss = {};
+// export const ANTI_LIST_MARKERcss = {};
+// export const ANTI_LIST_TEXTcss = {};
 export const FLUSH_LISTcss = {};
-export const MD_CODE_PREcss = {};
-export const HRcss = {};
-export const WARNINGcss = {};
-export const ABOUT_HEADERcss = (str?: number): CssMap => {return{}};
+// export const MD_CODE_PREcss = {};
+// export const WARNINGcss = {};
 
 export function render_md_doc(host: LiveTree, src: string): void {
   host.empty();
@@ -52,7 +51,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
     if (meaningful.length === 0) return;
 
     const p = host.create.div().classlist.add("md-p");
-    p.css.setMany(ABOUT_P_TEXTcss);
+    p.css.setMany(SPP_MD_PARAGRAPHcss);
 
     for (let i = 0; i < meaningful.length; i += 1) {
       const row = p.create.div().css.setMany({ textIndent: "4ch" });
@@ -79,7 +78,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
       if (!item) continue;
 
       const li = list.create.div().classlist.add("md-li");
-      li.css.setMany(ABOUT_LIST_ROWcss);
+      li.css.setMany(SPP_MD_LISTcss);
 
       // choose marker text by list kind
       const marker = item.kind === "ol" ? `${start + i})`
@@ -88,8 +87,8 @@ export function render_md_doc(host: LiveTree, src: string): void {
 
       // choose marker css by list kind
       const markerCss = item.kind === "anti"
-        ? ANTI_LIST_MARKERcss
-        : ABOUT_LIST_MARKERcss;
+        ? SPP_MD_ANTI_LIST_ITEMcss
+        : SPP_MD_LIST_ITEMcss;
 
       const block = li.create.span()
         .text.set(marker)
@@ -100,12 +99,12 @@ export function render_md_doc(host: LiveTree, src: string): void {
 
       // choose body css by list kind
       const bodyCss = item.kind === "anti"
-        ? ANTI_LIST_TEXTcss
-        : LIST_TEXTcss;
-      
+        ? SPP_MD_ANTI_LIST_ITEMcss
+        : SPP_MD_LIST_ITEMcss;
+
       const body = li.create.span()
         .css.setMany(bodyCss);
-      
+
       const lines = item.text.split("\n");
       for (let j = 0; j < lines.length; j += 1) {
         const row = body.create.div();
@@ -126,7 +125,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
 
     const isLogo = (codeLang ?? "").toLowerCase() === "hson";
 
-    const pre = host.create.div().classlist.add("md-pre").css.setMany(MD_CODE_PREcss);
+    const pre = host.create.div().classlist.add("md-pre").css.setMany({});
     if (isLogo) return;
 
     for (const line of codeLines) {
@@ -154,7 +153,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
         .attr.set("rel", "noopener noreferrer");
 
       a.text.set(url);
-      a.css.setMany(MD_LINK_LINEcss);
+      a.css.setMany(SPP_MD_LINK_LINEcss);
 
       continue;
     }
@@ -164,7 +163,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
       flushList();
 
       const box = host.create.div().classlist.add("md-at-line");
-      box.css.setMany(MD_COPY_LINEcss);
+      box.css.setMany(SPP_MD_COPY_LINEcss);
 
       render_line_with_comment(box, line.trim(), "prose");
 
@@ -199,7 +198,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
       flushList();
 
       const hr = host.create.div().classlist.add("md-hr");
-      hr.css.setMany(HRcss);
+      hr.css.setMany(SPP_MD_HRcss);
 
       continue;
     }
@@ -215,7 +214,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
       const text = (m[2] ?? "").trim();
 
       const h = host.create.div().classlist.add(`md-h${level}`);
-      h.css.setMany(ABOUT_HEADERcss(level));
+      h.css.setMany(SPP_MD_HEADERcss(level));
       h.text.set(text);
       continue;
     }
@@ -227,7 +226,7 @@ export function render_md_doc(host: LiveTree, src: string): void {
       flushList();
 
       const box = host.create.div().classlist.add("md-warning");
-      box.css.setMany(WARNINGcss);
+      box.css.setMany(SPP_MD_WARNINGcss);
 
       const body = box.create.div();
       render_line_with_comment(body, warn[1] ?? "", "prose");

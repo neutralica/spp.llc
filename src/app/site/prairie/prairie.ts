@@ -9,6 +9,7 @@ import { make_rng } from "../../utils/rng";
 import { depth_ease, hsl, default_prairie_config, row_wind_x } from "./prairie-helpers";
 import { build_flower_cluster_path, ease_out_back, make_row_flowers } from "./prairie-flowers";
 import type { SvgLiveTree } from "hson-live/types";
+import { $svg_filter } from "../../core/consts/ui-consts";
 
 
 
@@ -171,9 +172,8 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>)
   const rand = make_rng(cfg.seed);
   const rows: PrairieRowStatic[] = [];
   const paths: SvgLiveTree[] = [];
-  const svg = create_svg(cfg.width, cfg.height);
-
-
+  const svg = create_svg(cfg.width, cfg.height).css.setMany({
+    filter:$svg_filter});
   {
     const bg2 = svg.create.rect()
       .attr.setMany({
