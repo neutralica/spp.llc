@@ -14,7 +14,7 @@ const isEven = (n: number): boolean => {
   return n % 2 === 0;
 };
 const rngHundred = () => { return Math.floor(Math.random() * 100); }
-export const _rand_ix = (len: number) => { return Math.random() * len; }
+export const _rand_ix = (len: number) => { return Math.floor(Math.random() * len); }
 const capFirst = (s: string): string => {
   const st = s.trim()
     const first = st.charAt(0);

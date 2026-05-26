@@ -1,8 +1,8 @@
 import { hson } from "hson-live";
-import { OKLCH_ACID_WASHED, OKLCH_NEUTRALS } from "../core/consts/oklch";
-import { set_alpha } from "../core/helpers/color-helpers";
-import { _create, type CreationPkg } from "../site/prairie/creator";
-import { cssCONTENT_HEADER, cssCONTENT_TXT, cssCONTENT_BOX, cssCONTENT_BACK, cssFRAME } from "./content.css";
+import { OKLCH_ACID_WASHED, OKLCH_NEUTRALS } from "../../core/consts/oklch";
+import { set_alpha } from "./../colors/color-helpers";
+import { _create_pkg, type CreatePkg } from "../../site/prairie/creator";
+import { cssCONTENT_HEADER, cssCONTENT_TXT, cssCONTENT_BOX, cssCONTENT_BACK, cssFRAME } from "./../creation/content.css";
 
 const frameBase = {
   strokeWidth: "1",
@@ -10,8 +10,8 @@ const frameBase = {
   fill: "none",
 } as const;
 
-const hdr: CreationPkg = { el: "div", cls: "box header", css: cssCONTENT_HEADER };  
-const cntTxt: CreationPkg = { el: "div", cls: "content text", css: cssCONTENT_TXT };
+const hdr: CreatePkg = { el: "div", cls: "box header", css: cssCONTENT_HEADER };  
+const cntTxt: CreatePkg = { el: "div", cls: "content text", css: cssCONTENT_TXT };
 
 export function makeContentBox() {
   const tree = hson.liveTree.create.div()
@@ -68,8 +68,8 @@ export function makeContentBox() {
       transform: "translate(0.8 0.8)",
     });
 
-  const header = _create(tree, hdr);
-  const content = _create(tree,cntTxt);
+  const header = _create_pkg(tree, hdr);
+  const content = _create_pkg(tree,cntTxt);
 
 
   const hide = () => { tree.css.set.display("none"); };

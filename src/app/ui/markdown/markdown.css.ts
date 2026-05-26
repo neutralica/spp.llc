@@ -1,5 +1,5 @@
 import type { CssMap } from "hson-live/types";
-import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS } from "../core/consts/oklch";
+import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS } from "../../core/consts/oklch";
 
 const priceRe = /\$[0-9]+(?:\.[0-9]{2})?/g;
 const handleRe = /@[a-zA-Z0-9_.-]+/g;

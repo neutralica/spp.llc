@@ -1,5 +1,5 @@
 import type { CssMap } from "hson-live/types";
-import { _COLS, _TXT, SYS_MONOfont, SYS_SANSfont } from "./ui-consts";
+import { _COLS, _TXT, SYS_MONOfont, SYS_SANSfont } from "./ui.consts";
 
 export const FONT_FAM_MONO: CssMap = {
     fontFamily: SYS_MONOfont,

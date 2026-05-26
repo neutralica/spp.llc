@@ -9,7 +9,7 @@ import { make_rng } from "../../utils/rng";
 import { depth_ease, hsl, default_prairie_config, row_wind_x } from "./prairie-helpers";
 import { build_flower_cluster_path, ease_out_back, make_row_flowers } from "./prairie-flowers";
 import type { SvgLiveTree } from "hson-live/types";
-import { $svg_filter } from "../../core/consts/ui-consts";
+import { $svg_filter, _COLS } from "../../core/consts/ui.consts";
 
 
 
@@ -47,10 +47,13 @@ function make_row_static(
   const swaySpeed = _lerp(0.7, 1.4, rand());
   const phase = rand() * Math.PI * 2;
 
+  
+  const lf = cfg.lightFar;
+  const ln = cfg.lightNear;
   // CHANGED: row color shifts gently with depth
   const hue = cfg.hueBase + _lerp(-cfg.hueJitter, cfg.hueJitter, rand());
   const sat = _lerp(cfg.satNear, cfg.satFar, t);
-  const light = _lerp(cfg.lightNear, cfg.lightFar, t);
+  const light = _lerp(cfg.lightFar,cfg.lightNear, t);
   const fill = hsl(hue, sat, light);
 
   const xs: number[] = [];
@@ -160,7 +163,8 @@ function create_path(fill: string): SvgLiveTree {
   return path2;
 }
 
-export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>): PrairieRuntime {
+export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
+): PrairieRuntime {
   const width = Math.max(1, Math.round(host.dom.clientSize()?.width || 1200));
   const height = Math.max(1, Math.round(host.dom.clientSize()?.height || 700));
 
@@ -168,22 +172,13 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>)
     ...default_prairie_config(width, height),
     ...config,
   };
-
   const rand = make_rng(cfg.seed);
   const rows: PrairieRowStatic[] = [];
   const paths: SvgLiveTree[] = [];
   const svg = create_svg(cfg.width, cfg.height).css.setMany({
-    filter:$svg_filter});
+    filter: $svg_filter
+  });
   {
-    const bg2 = svg.create.rect()
-      .attr.setMany({
-        xmlns: "http://www.w3.org/2000/svg",
-        x: "0",
-        y: String(cfg.horizonY),
-        width: String(cfg.width),
-        height: String(cfg.height - cfg.horizonY),
-        fill: "hsl(108 28% 16%)"
-      })
   }
 
   // CHANGED: far rows first, near rows last

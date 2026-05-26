@@ -1,11 +1,11 @@
 import type { CssMap } from "hson-live/types";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS } from "./oklch";
-import { _TXT, $SKYBACK_GRAD, SYS_SERIFfont, _COLS, TXTcol_MAIN } from "./ui-consts";
-import { set_alpha } from "../helpers/color-helpers";
+import { _TXT, $SKYBACK_GRAD, SYS_SERIFfont, _COLS, TXTcol_MAIN } from "./ui.consts";
+import { set_alpha } from "../../ui/colors/color-helpers";
 
 
 
-const cssOVERLAY: CssMap = {
+export const cssOVERLAY: CssMap = {
   position: "fixed",
   height: "100%",
   width: "100%",
@@ -28,7 +28,7 @@ export const cssPRAIRIE_HOST: CssMap = {
   background: $SKYBACK_GRAD,
 };
 
-export const cssSCENE: CssMap = {
+export const cssSTAGE_PRAIRIE: CssMap = {
   position: "relative",
   filter: "saturate(0.92) sepia(0.10) contrast(0.96) brightness(1.04)",
   __after: {
@@ -36,11 +36,7 @@ export const cssSCENE: CssMap = {
     position: "absolute",
     inset: "0",
     pointerEvents: "none",
-    background: `
-      radial-gradient(circle at 12% 8%, rgba(255, 246, 210, 0.14), transparent 34%),
-      radial-gradient(circle at 92% 88%, rgba(255, 246, 210, 0.22), transparent 38%),
-      linear-gradient(to bottom, rgba(8, 18, 32, 0.10), rgba(245, 224, 170, 0.08) 48%, rgba(42, 34, 18, 0.12))
-    `,
+    background: _COLS.sky,
     mixBlendMode: "soft-light",
   },
 };

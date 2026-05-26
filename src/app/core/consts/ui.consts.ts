@@ -1,10 +1,9 @@
 // ui-consts.ts
 
 
-import { set_alpha } from "../helpers/color-helpers";
+import { set_alpha } from "../../ui/colors/color-helpers";
 import { $gry_, ACID_WASH_RGBA, bckColor, bcklight, deepBack } from "./colors.consts";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS, OKLCH_VIBRANT } from "./oklch";
-import type { Fmt } from "../types/core.types";
 import { rng360 } from "../../site/prairie/prairie-helpers";
 
 export const _TXT = {
@@ -48,7 +47,7 @@ export const SYS_SERIFfont = "'Cormorant', serif";
 // export const SYS_SMOLfont = "'Tiny5', Trebuchet MS"
 export const SYS_MONOfont = "'Inconsolata', Monaco, monospace";
 export const SYS_SANSfont = "'IBM Plex Sans', sans-serif";
-export const $SKYBACK_GRAD = `linear-gradient(${rng360()}deg, hsl(210 45% 22%), hsl(210 45% 12%))`;
+export const $SKYBACK_GRAD = `linear-gradient(${rng360()}deg, hsl(210 45% 82%), hsl(210 45% 52%))`;
 
 export const GRID_GAPstr = "2px";
 export const $CODE_FONT_SIZE = _TXT.main;
@@ -67,6 +66,7 @@ export const _COLS = {
   backlo: deepBack,
   backhi: bckColor,
   bcklight,
+  sky: "hsl(210 45% 15%)",
   scrollA
 };
 

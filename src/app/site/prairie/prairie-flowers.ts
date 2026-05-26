@@ -1,4 +1,4 @@
-import { set_alpha } from "../../core/helpers/color-helpers";
+import { set_alpha } from "../../ui/colors/color-helpers";
 import { _clamp01, _lerp } from "../../utils/helpers";
 import { row_wind_x } from "./prairie-helpers";
 import type { PrairieRowStatic, PrairieConfig, PrairieFlowerStatic, PrairieFlowerBud } from "./prairie.types";
@@ -30,7 +30,7 @@ export function make_row_flowers(
             yBase: row.yBase - row.bladeHeight * _lerp(0.62, 0.94, rand()),
 
             radius,
-            color: set_alpha(pick_flower_color(rand), 0.4),
+            color: set_alpha(pick_flower_color(rand, k), 0.4),
             buds: make_flower_buds(row.t, rand),
 
             bloomAtSec: cfg.flowerBloomWindowSec,
@@ -45,25 +45,25 @@ export function make_row_flowers(
     return out;
 }
 
-function pick_flower_color(rand: () => number): string {
-  // lightness: soft pastel band
-  const l = 0.78 + rand() * 0.12;      // 0.78–0.90
+function pick_flower_color(rand: () => number, k: number): string {
+    // lightness: soft pastel band
+    const l = 0.78 + (rand() - (k * 0.1)) * 0.12;      // 0.78–0.90
 
-  // chroma: keep it gentle, avoid neon
-  const c = 0.16 + rand() * 0.16;      // 0.06–0.12
+    // chroma: keep it gentle, avoid neon
+    const c = 0.16 + rand() * 0.16;      // 0.06–0.12
 
-  // hue: spring spectrum bias (greens → yellows → pinks → lilac)
-  const hueBands = [
-    [90, 140],   // greens
-    [140, 190],  // yellow-green → yellow
-    [300, 340],  // pink
-    [40, 70],    // warm yellow/orange
-  ];
+    // hue: spring spectrum bias (greens → yellows → pinks → lilac)
+    const hueBands = [
+        [90, 140],   // greens
+        [140, 190],  // yellow-green → yellow
+        [300, 340],  // pink
+        [40, 70],    // warm yellow/orange
+    ];
 
-  const band = hueBands[Math.floor(rand() * hueBands.length)];
-  const h = band![0]! + rand() * (band![1]! - band![0]!);
+    const band = hueBands[Math.floor(rand() * hueBands.length)];
+    const h = band![0]! + rand() * (band![1]! - band![0]!);
 
-  return `oklch(${l} ${c} ${h})`;
+    return `oklch(${l} ${c} ${h})`;
 }
 
 export function ease_out_back(t: number): number {
@@ -120,8 +120,8 @@ export function build_flower_cluster_path(
     const rowWind = row_wind_x(row, flower.xBase, timeSec);
     const phase = timeSec * flower.wobbleSpeed + flower.phase;
 
-    const wobbleX = Math.sin(phase /2) * (flower.wobbleAmp * 21);
-    const wobbleY = Math.cos(phase) * flower.wobbleAmp *10;
+    const wobbleX = Math.sin(phase / 2) * (flower.wobbleAmp * 21);
+    const wobbleY = Math.cos(phase) * flower.wobbleAmp * 10;
 
     const cx = flower.xBase + wobbleX;
     const cy = flower.yBase - wobbleY;

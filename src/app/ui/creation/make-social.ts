@@ -1,6 +1,6 @@
 import { hson } from "hson-live";
-import { OKLCH_ACID_WASHED } from "../core/consts/oklch";
-import { $insta_d, $threads_d } from "./icon-svg-helpers";
+import { OKLCH_ACID_WASHED } from "../../core/consts/oklch";
+import { $insta_d, $threads_d } from "../icon-svg-strings";
 
  const strokeline = {
   strokeWidth: "1",

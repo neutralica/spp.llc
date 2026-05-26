@@ -5,7 +5,7 @@ import { _sleep } from "../app/utils/helpers";
 import { mk_div_id } from "../app/utils/makers";
 import { outcome, relay, relay_data, type Outcome, type OutcomeAsync } from "intrastructure";
 
-import { _COLS } from "./core/consts/ui-consts";
+import { _COLS } from "./core/consts/ui.consts";
 import { OKLCH_NEUTRALS, OKLCH_VIBRANT } from "./core/consts/oklch";
 import { log_oklch_palette } from "./utils/swatch-logger";
 import { STAGE_CSS } from "./core/consts/css.consts";

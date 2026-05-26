@@ -28,8 +28,8 @@ export function default_prairie_config(width: number, height: number): PrairieCo
     hueJitter: 10,
     satNear: 56,
     satFar: 6,
-    lightNear: 44,
-    lightFar: 12,
+    lightNear: 54,
+    lightFar:22,
 
     flowerChance: 10.35,
 

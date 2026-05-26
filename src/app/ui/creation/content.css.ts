@@ -1,7 +1,7 @@
 import type { CssMap } from "hson-live/types";
-import { cssSCROLL } from "../core/consts/main.css";
-import { OKLCH_ACID_WASHED } from "../core/consts/oklch";
-import { _TXT, TXTcol_ALT } from "../core/consts/ui-consts";
+import { cssSCROLL } from "../../core/consts/main.css";
+import { OKLCH_ACID_WASHED } from "../../core/consts/oklch";
+import { _TXT, TXTcol_ALT } from "../../core/consts/ui.consts";
 
 
 export const cssCONTENT_BOX: CssMap = {

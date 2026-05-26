@@ -1,7 +1,7 @@
 import type { LiveTree } from "hson-live";
 import type { CssMap } from "hson-live/types";
 
-export type CreationPkg = {
+export type CreatePkg = {
   id?: string;
   cls?: string;
   txt?: string;
@@ -9,7 +9,7 @@ export type CreationPkg = {
   css?: CssMap;
 };
 
-export const _create = (tgt: LiveTree, pkg: CreationPkg) => {
+export const _create_pkg = (tgt: LiveTree, pkg: CreatePkg) => {
   const newTree = tgt.create.tag(pkg.el);
   newTree.id.set(pkg.id ?? "false");
   newTree.classlist.set(pkg.cls ?? "false");

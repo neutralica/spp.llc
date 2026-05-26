@@ -1,24 +1,12 @@
 import type { LiveTree } from "hson-live";
 import { type ListItem, type ListKind, render_line_with_comment, extractUrl, parse_list_item, isIndented } from "./init-helpers";
-import type { CssMap } from "hson-live/types";
 import { SPP_MD_ANTI_LIST_ITEMcss, SPP_MD_COPY_LINEcss, SPP_MD_HEADERcss, SPP_MD_HRcss, SPP_MD_LINK_LINEcss, SPP_MD_LIST_ITEMcss, SPP_MD_LISTcss, SPP_MD_PARAGRAPHcss, SPP_MD_WARNINGcss } from "./markdown.css";
 
 // -----------------------------
 // Markdown-ish renderer (only touch: flushPara + flushList use render_inline)
 // -----------------------------
 
-
-// export const ABOUT_P_TEXTcss = {};
-// export const ABOUT_LIST_MARKERcss = {};
-// export const ABOUT_LIST_ROWcss = {};
-// export const LIST_TEXTcss = {};
-// export const MD_LINK_LINEcss = {};
-// export const MD_COPY_LINEcss = {};
-// export const ANTI_LIST_MARKERcss = {};
-// export const ANTI_LIST_TEXTcss = {};
 export const FLUSH_LISTcss = {};
-// export const MD_CODE_PREcss = {};
-// export const WARNINGcss = {};
 
 export function render_md_doc(host: LiveTree, src: string): void {
   host.empty();
