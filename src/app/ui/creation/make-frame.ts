@@ -70,6 +70,125 @@ function drawWoodGrain(ctx: CanvasRenderingContext2D, w: number, h: number): voi
   ctx.restore();
 }
 
+function drawGoldUndercut(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.translate(1.8, 1.8);
+  makeFramePath(ctx, w, h, cfg);
+  ctx.strokeStyle = "oklch(18% 0.045 76 / 0.38)";
+  ctx.lineWidth = 2.35;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGoldHighlight(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.translate(-0.9, -0.9);
+  makeFramePath(ctx, w, h, cfg);
+  ctx.strokeStyle = "oklch(94% 0.065 96 / 0.74)";
+  ctx.lineWidth = 0.9;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGoldPits(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  const x0 = cfg.inset;
+  const y0 = cfg.inset;
+  const x1 = w - cfg.inset;
+  const y1 = h - cfg.inset;
+  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+
+  // CHANGED: micro-pitting only on straight frame runs. No dash marks and no
+  // corner marks; the earlier longer strokes read as digital hyphens.
+  const pits: readonly (readonly [number, number, number])[] = [
+    [x0 + c + 126, y0 + 0.2, 0.74],
+    [x0 + c + 318, y0 - 0.15, 0.58],
+    [x1 - c - 244, y0 + 0.1, 0.68],
+    [x1 - c - 82, y0 - 0.05, 0.52],
+
+    [x1 + 0.05, y0 + c + 156, 0.62],
+    [x1 - 0.1, y0 + c + 386, 0.54],
+    [x1 + 0.05, y1 - c - 210, 0.66],
+
+    [x1 - c - 142, y1 - 0.1, 0.7],
+    [x0 + c + 212, y1 + 0.05, 0.62],
+    [x0 + c + 420, y1 - 0.15, 0.54],
+
+    [x0 - 0.05, y1 - c - 176, 0.62],
+    [x0 + 0.05, y0 + c + 254, 0.54],
+  ];
+
+  ctx.save();
+
+  for (const [x, y, r] of pits) {
+    // CHANGED: circular pocks avoid obvious vertical/horizontal dash artifacts.
+    ctx.fillStyle = "oklch(16% 0.035 72 / 0.22)";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "oklch(97% 0.05 96 / 0.26)";
+    ctx.beginPath();
+    ctx.arc(x - r * 0.45, y - r * 0.38, r * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawGoldFlecks(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  const x0 = cfg.inset;
+  const y0 = cfg.inset;
+  const x1 = w - cfg.inset;
+  const y1 = h - cfg.inset;
+  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+
+  const topStart = x0 + c + 30;
+  const topEnd = x1 - c - 30;
+  const sideStart = y0 + c + 34;
+  const sideEnd = y1 - c - 34;
+
+  ctx.save();
+
+  // CHANGED: small flecks/noise instead of line glints. They stay on straight
+  // frame runs and make the gilt rougher without producing obvious hyphens.
+  for (let i = 0; i < 42; i += 1) {
+    const t = ((i * 37) % 100) / 100;
+    const side = i % 4;
+    const bright = i % 5 === 0;
+    const r = bright ? 0.55 : 0.38;
+    let x = 0;
+    let y = 0;
+
+    if (side === 0) {
+      x = topStart + (topEnd - topStart) * t;
+      y = y0 + Math.sin(i * 1.91) * 1.2;
+    } else if (side === 1) {
+      x = x1 + Math.cos(i * 1.47) * 1.1;
+      y = sideStart + (sideEnd - sideStart) * t;
+    } else if (side === 2) {
+      x = topStart + (topEnd - topStart) * t;
+      y = y1 + Math.sin(i * 1.63) * 1.2;
+    } else {
+      x = x0 + Math.cos(i * 1.39) * 1.1;
+      y = sideStart + (sideEnd - sideStart) * t;
+    }
+
+    ctx.fillStyle = bright
+      ? "oklch(98% 0.055 98 / 0.34)"
+      : "oklch(24% 0.045 76 / 0.18)";
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 function makeFramePath(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
   const x0 = cfg.inset;
   const y0 = cfg.inset;
@@ -113,6 +232,7 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   const gold = OKLCH_ACID_WASHED.straw;
 
   fillFrameExterior(ctx, w, h, cfg);
+  drawGoldUndercut(ctx, w, h, cfg);
 
   ctx.save();
   ctx.lineJoin = "round";
@@ -145,6 +265,10 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   ctx.lineWidth = 1.5;
   ctx.stroke();
   ctx.restore();
+
+  drawGoldHighlight(ctx, w, h, cfg);
+  drawGoldPits(ctx, w, h, cfg);
+  drawGoldFlecks(ctx, w, h, cfg);
 
   ctx.restore();
 }
