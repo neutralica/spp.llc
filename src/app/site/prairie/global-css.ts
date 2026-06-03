@@ -4,7 +4,7 @@ import { CssManager, hson } from "hson-live";
 export function set_global_css() {
     const BP_TABLET = "(max-width: 900px)";
     const BP_PHONE = "(max-width: 620px)";
-    const css = CssManager.globals.invoke();
+    const css = CssManager.api();
     
     css.sel("html, body").setMany({
         margin: "0",
