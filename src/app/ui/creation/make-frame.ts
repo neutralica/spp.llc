@@ -198,45 +198,49 @@ function drawInnerApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: nu
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
-  // CHANGED: almost invisible universal aperture depth. Directional shadow is
-  // handled separately so this does not become a full inner glow/stripe.
+  // CHANGED: on the pale paper wash the aperture needs a real separating edge,
+  // but it should follow the frame path rather than become right/bottom bars.
   makeFramePath(ctx, w, h, cfg);
   ctx.clip();
 
+  ctx.save();
+  ctx.shadowColor = "oklch(4% 0.025 78 / 0.26)";
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(4% 0.02 78 / 0.045)";
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = "oklch(5% 0.024 78 / 0.16)";
+  ctx.lineWidth = 5.2;
+  ctx.stroke();
+  ctx.restore();
+
+  makeFramePath(ctx, w, h, cfg);
+  ctx.strokeStyle = "oklch(9% 0.026 78 / 0.11)";
+  ctx.lineWidth = 1.15;
   ctx.stroke();
 
   ctx.restore();
 }
 
 function drawDirectionalApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
   const strength = Math.max(0.18, Math.cos(theta + Math.PI * 0.25));
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // CHANGED: shadow only the right and bottom aperture edges. This keeps the
-  // upper-left light model coherent and avoids a uniform glowing outline.
-  ctx.strokeStyle = `oklch(5% 0.026 78 / ${0.10 + strength * 0.08})`;
-  ctx.lineWidth = 3.4;
+  // CHANGED: no more straight right/bottom bars. Keep only a very quiet
+  // path-following directional darkening so the paper wash still has depth.
+  makeFramePath(ctx, w, h, cfg);
+  ctx.clip();
 
-  ctx.beginPath();
-  ctx.moveTo(x1 - 1.8, y0 + c + 42);
-  ctx.lineTo(x1 - 1.8, y1 - c - 54);
+  ctx.save();
+  ctx.translate(1.15, 1.15);
+  makeFramePath(ctx, w, h, cfg);
+  ctx.strokeStyle = `oklch(5% 0.026 78 / ${0.055 + strength * 0.035})`;
+  ctx.lineWidth = 3.2;
   ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(x0 + c + 64, y1 - 1.8);
-  ctx.lineTo(x1 - c - 52, y1 - 1.8);
-  ctx.stroke();
+  ctx.restore();
 
   ctx.restore();
 }
@@ -376,48 +380,56 @@ function drawGoldGrain(ctx: CanvasRenderingContext2D, w: number, h: number, cfg:
 }
 
 function drawDirectionalGlints(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
+  const x0 = cfg.inset;
+  const y0 = cfg.inset;
+  const x1 = w - cfg.inset;
+  const y1 = h - cfg.inset;
+  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
   const strength = Math.max(0, Math.cos(theta + Math.PI * 0.25));
-  const alpha = 0.30 + strength * 0.24;
+  const alpha = 0.30 + strength * 0.22;
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // CHANGED: directional glints now use path samples too. They are biased
-  // toward the upper-left/top runs but no longer draw fixed screen-space lines
-  // that can hang past the corner geometry.
+  // CHANGED: keep glints away from the inverse-corner curves. The path-sampled
+  // version was physically nicer in theory, but tangent-line segments can poke
+  // out as whiskers at certain sizes.
+  const topStart = x0 + c + 44;
+  const topEnd = x1 - c - 68;
+  const topLen = Math.max(0, topEnd - topStart);
   const glintCount = frameRandInt(61, 3, 6);
 
   for (let i = 0; i < glintCount; i += 1) {
-    const t = 0.015 + frameRand(i, 62) * 0.23;
-    const p = sampleFramePath(w, h, cfg, t);
-    const len = 14 + frameRand(i, 63) * 38;
-    const offset = (frameRand(i, 64) - 0.5) * 1.3;
-    const x = p.x + p.nx * offset;
-    const y = p.y + p.ny * offset;
+    const t = frameRand(i, 62);
+    const x = topStart + topLen * t;
+    const y = y0 - 0.48 + (frameRand(i, 63) - 0.5) * 0.6;
+    const len = Math.min(48, 14 + frameRand(i, 64) * 34);
     const fade = 1 - i / Math.max(1, glintCount);
 
-    ctx.strokeStyle = `oklch(99% 0.052 98 / ${alpha * (0.25 + fade * 0.55)})`;
-    ctx.lineWidth = 0.42 + frameRand(i, 65) * 0.18;
+    ctx.strokeStyle = `oklch(99% 0.052 98 / ${alpha * (0.20 + fade * 0.45)})`;
+    ctx.lineWidth = 0.36 + frameRand(i, 65) * 0.16;
 
     ctx.beginPath();
-    ctx.moveTo(x - p.tx * len * 0.42, y - p.ty * len * 0.42);
-    ctx.lineTo(x + p.tx * len * 0.58, y + p.ty * len * 0.58);
+    ctx.moveTo(x - len * 0.42, y);
+    ctx.lineTo(x + len * 0.58, y);
     ctx.stroke();
   }
 
-  // Tiny counter-catch near the lower-right, also path sampled.
-  const counter = sampleFramePath(w, h, cfg, 0.48 + frameRand(0, 66) * 0.035);
-  const len = 10 + frameRand(0, 67) * 14;
-  const offset = (frameRand(0, 68) - 0.5) * 1.2;
-  const x = counter.x + counter.nx * offset;
-  const y = counter.y + counter.ny * offset;
-
-  ctx.strokeStyle = `oklch(98% 0.048 98 / ${alpha * 0.14})`;
+  // A tiny upper-left vertical catch, kept on the straight rail only.
+  ctx.strokeStyle = `oklch(98% 0.048 98 / ${alpha * 0.22})`;
   ctx.lineWidth = 0.34;
   ctx.beginPath();
-  ctx.moveTo(x - counter.tx * len * 0.5, y - counter.ty * len * 0.5);
-  ctx.lineTo(x + counter.tx * len * 0.5, y + counter.ty * len * 0.5);
+  ctx.moveTo(x0 - 0.42, y0 + c + 72);
+  ctx.lineTo(x0 - 0.42, y0 + c + 94);
+  ctx.stroke();
+
+  // Tiny lower-right counter-catch, also on a straight run and away from the corner.
+  ctx.strokeStyle = `oklch(98% 0.048 98 / ${alpha * 0.12})`;
+  ctx.lineWidth = 0.32;
+  ctx.beginPath();
+  ctx.moveTo(x1 - c - 106, y1 + 0.42);
+  ctx.lineTo(x1 - c - 82, y1 + 0.42);
   ctx.stroke();
 
   ctx.restore();
@@ -475,20 +487,20 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   // CHANGED: relief is faked with a wide dull under-stroke, a main gold line,
   // and two small offset highlights/shadows.
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.075);
-  ctx.lineWidth = 4.6;
+  ctx.strokeStyle = set_alpha(gold, 0.12);
+  ctx.lineWidth = 4.85;
   ctx.stroke();
 
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.56);
-  ctx.lineWidth = 2.55;
+  ctx.strokeStyle = set_alpha(gold, 0.68);
+  ctx.lineWidth = 2.65;
   ctx.stroke();
 
   ctx.save();
   ctx.translate(1.2, 1.2);
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.18);
-  ctx.lineWidth = 1.15;
+  ctx.strokeStyle = set_alpha(gold, 0.24);
+  ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.restore();
 

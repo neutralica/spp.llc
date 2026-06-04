@@ -94,18 +94,18 @@ export const OKLCH_NEUTRALS = {
   paper: "oklch(0.82 0.02 260)", // light surfaces
 
   /* beige-brown conteingent */
- pearlIvory: "oklch(94% 0.025 92)",
-  oldPaper: "oklch(90% 0.035 88)",
-  strawWash: "oklch(86% 0.052 86)",
-  paleVellum: "oklch(82% 0.040 78)",
-  champagneAsh: "oklch(76% 0.045 78)",
-  mothTaupe: "oklch(68% 0.035 70)",
-  dryReed: "oklch(62% 0.055 75)",
-  mutedOchre: "oklch(56% 0.072 72)",
-  tarnishedBrass: "oklch(50% 0.070 77)",
-  tobaccoBrown: "oklch(42% 0.060 64)",
-  smokedUmber: "oklch(34% 0.045 58)",
-  walnutBlack: "oklch(24% 0.030 55)",
+ pearlIvory: "oklch(0.94 0.025 92)",
+  oldPaper: "oklch(0.90 0.035 88)",
+  strawWash: "oklch(0.86 0.052 86)",
+  paleVellum: "oklch(0.82 0.040 78)",
+  champagneAsh: "oklch(0.76 0.045 78)",
+  mothTaupe: "oklch(0.68 0.035 70)",
+  dryReed: "oklch(0.62 0.055 75)",
+  mutedOchre: "oklch(0.56 0.072 72)",
+  tarnishedBrass: "oklch(0.50 0.070 77)",
+  tobaccoBrown: "oklch(0.42 0.060 64)",
+  smokedUmber: "oklch(0.34 0.045 58)",
+  walnutBlack: "oklch(0.24 0.030 55)",
 
   // --- tinted neutrals (subtle personality) ---
   blueTint: "oklch(0.70 0.020 240)", // cool UI wash
