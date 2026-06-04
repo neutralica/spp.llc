@@ -12,7 +12,7 @@ import { makeContentBox } from "../../ui/creation/make-content-box.js";
 import { makeSocialBox } from "../../ui/creation/make-social.js";
 import { set_global_css } from "./global-css.js";
 import { _create_pkg, type CreatePkg } from "./creator.js";
-import { makeFrame } from "../../ui/creation/make-frame.js";
+import { make_frame } from "../../ui/creation/make-frame.js";
 
 
 export type MenuOpts = "shop" | "terroir" | "tour" | "about";
@@ -38,7 +38,7 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   /* prairie svg host */
   const prairieHost = _create_pkg(stage, prrHost);
   prairie_factory(prairieHost);
-  makeFrame(prairieHost);
+  make_frame(prairieHost);
   const prairieMask = _create_pkg(prairieHost, prrMskPkg);
   /* ui container */
   const pageHost = _create_pkg(stage, pgHost);
@@ -90,4 +90,3 @@ function getContent(b: string) {
 
 
 }
-

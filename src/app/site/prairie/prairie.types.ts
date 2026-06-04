@@ -105,8 +105,6 @@ export type PrairieFlowerStatic = Readonly<{
   color: string;
   buds: readonly PrairieFlowerBud[];
 
-  bloomAtSec: number;
-  bloomDurSec: number;
 
   // tiny independent wobble, layered on top of row wind
   phase: number;

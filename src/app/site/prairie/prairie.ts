@@ -12,8 +12,13 @@ import type { SvgLiveTree } from "hson-live/types";
 import { $svg_filter, _COLS } from "../../core/consts/ui.consts";
 
 
-
 const svgNs = "http://www.w3.org/2000/svg";
+
+const PRAIRIE_MIN_WORLD_WIDTH = 2000;
+const PRAIRIE_WORLD_EXTRA_WIDTH = 360;
+const PRAIRIE_PAN_PERIOD_SEC = 220;
+const PRAIRIE_PAN_MAX_PX = 58;
+const PRAIRIE_VERTICAL_BLEED = 80;
 
 // -----------------------------
 // row construction
@@ -47,13 +52,13 @@ function make_row_static(
   const swaySpeed = _lerp(0.7, 1.4, rand());
   const phase = rand() * Math.PI * 2;
 
-  
+
   const lf = cfg.lightFar;
   const ln = cfg.lightNear;
   // CHANGED: row color shifts gently with depth
   const hue = cfg.hueBase + _lerp(-cfg.hueJitter, cfg.hueJitter, rand());
   const sat = _lerp(cfg.satNear, cfg.satFar, t);
-  const light = _lerp(cfg.lightFar,cfg.lightNear, t);
+  const light = _lerp(cfg.lightFar, cfg.lightNear, t);
   const fill = hsl(hue, sat, light);
 
   const xs: number[] = [];
@@ -136,38 +141,46 @@ function build_row_path_d(
 // -----------------------------
 
 function create_svg(width: number, height: number): SvgLiveTree {
-  // const svg = document.createElementNS(svgNs, "svg");
-  // svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  // svg.setAttribute("width", "100%");
-  // svg.setAttribute("height", "100%");
-  // svg.setAttribute("preserveAspectRatio", "none");
-  // svg.style.display = "block";
   const svg2 = hson.liveTree.create.svg()
-    .style.set.display("block")
+    .style.setMany({
+      display: "block",
+
+      // CHANGED: keep the prairie in its own fixed drawing world. The host clips
+      // it instead of letting the SVG stretch/compress horizontally with resize.
+      width: `${width}px`,
+      height: `${height}px`,
+      maxWidth: "none",
+      flex: "0 0 auto",
+      willChange: "transform",
+    })
     .attr.setMany({
       xmlns: svgNs,
-      width: "100%",
+      width: String(width),
+      height: String(height),
       viewBox: `0 0 ${width} ${height}`,
-      height: "100%",
-      preserveAspectRatio: "none"
+      preserveAspectRatio: "none",
     });
 
   return svg2;
 }
 
-function create_path(fill: string): SvgLiveTree {
-  const path2 = hson.liveTree.create.svg().create.path().attr.set("fill", fill);
-  // const path = document.createElementNS(ns, "path");
-  // path.setAttribute("fill", fill);
-  path2.removeSelf();
-  return path2;
-}
+// function create_path(fill: string): SvgLiveTree {
+//   const path2 = hson.liveTree.create.svg().create.path().attr.set("fill", fill);
+//   // const path = document.createElementNS(ns, "path");
+//   // path.setAttribute("fill", fill);
+//   path2.removeSelf();
+//   return path2;
+// }
 
 export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
 ): PrairieRuntime {
-  const width = Math.max(1, Math.round(host.dom.clientSize()?.width || 1200));
-  const height = Math.max(1, Math.round(host.dom.clientSize()?.height || 700));
-
+  const viewportWidth = Math.max(1, Math.round(host.dom.clientSize()?.width || 1200));
+  const viewportHeight = Math.max(1, Math.round(host.dom.clientSize()?.height || 700));
+  const height = viewportHeight + PRAIRIE_VERTICAL_BLEED;
+  const width = Math.max(
+    PRAIRIE_MIN_WORLD_WIDTH,
+    viewportWidth + PRAIRIE_WORLD_EXTRA_WIDTH,
+  );
   const cfg: PrairieConfig = {
     ...default_prairie_config(width, height),
     ...config,
@@ -176,20 +189,16 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
   const rows: PrairieRowStatic[] = [];
   const paths: SvgLiveTree[] = [];
   const svg = create_svg(cfg.width, cfg.height).css.setMany({
-    filter: $svg_filter
+    filter: $svg_filter,
   });
-  {
-  }
 
-  // CHANGED: far rows first, near rows last
-  for (let i = cfg.rowCount - 1; i >= 0; i--) {
-    const row = make_row_static(cfg, i, rand);
-    rows.push(row);
+  host.style.setMany({
+    overflow: "hidden",
+    position: "relative",
+  });
 
-    const path = create_path(row.fill);
-    svg.append(path);
-    paths.push(path);
-  }
+  // Removed first row-construction loop
+
   const flowerPaths: SvgLiveTree[] = [];
   const flowers: PrairieFlowerStatic[] = [];
 
@@ -223,6 +232,10 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
       flowerPaths.push(flowerPath);
     }
   }
+
+  const rowByIndex = new Map<number, PrairieRowStatic>();
+  for (const row of rows) rowByIndex.set(row.rowIndex, row);
+
   host.empty();
   host.append(svg);
 
@@ -233,6 +246,17 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
     if (stopped) return;
 
     const timeSec = timeMs * 0.001;
+
+    const visibleWidth = Math.max(1, Math.round(host.dom.clientSize()?.width || viewportWidth));
+    const visibleHeight = Math.max(1, Math.round(host.dom.clientSize()?.height || viewportHeight));
+    const spareWidth = Math.max(0, cfg.width - visibleWidth);
+    const panAmp = Math.min(PRAIRIE_PAN_MAX_PX, spareWidth * 0.42);
+    const panCenter = -spareWidth * 0.5;
+    const panPhase = Math.sin((timeSec / PRAIRIE_PAN_PERIOD_SEC) * Math.PI * 2);
+    const panX = panCenter + panPhase * panAmp;
+    const panY = -(cfg.height - visibleHeight) * 0.5;
+
+    svg.style.set.transform(`translate3d(${panX.toFixed(2)}px, ${panY.toFixed(2)}px, 0)`);
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -246,8 +270,6 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
       const flower = flowers[i] as PrairieFlowerStatic;
       const flowerPath = flowerPaths[i];
 
-      const rowByIndex = new Map<number, PrairieRowStatic>();
-      for (const row of rows) rowByIndex.set(row.rowIndex, row);
       const row = rowByIndex.get(flower.rowIndex);
       if (!flowerPath || !row) continue;
 

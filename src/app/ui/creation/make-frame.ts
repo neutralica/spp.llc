@@ -27,6 +27,105 @@ const FRAME_OUTER_FILL = "oklch(27% 0.055 83 / 0.88)";
 const WOOD_GRAIN_DARK = "oklch(42% 0.045 78 / 0.12)";
 const WOOD_GRAIN_SOFT = "oklch(68% 0.055 88 / 0.07)";
 const WOOD_KNOT_DARK = "oklch(36% 0.05 72 / 0.10)";
+const FRAME_TEXTURE_SEED = Math.random() * 1000;
+
+function frameRand(i: number, salt: number): number {
+  const x = Math.sin((i + 1) * 127.1 + salt * 311.7 + FRAME_TEXTURE_SEED) * 43758.5453123;
+  return x - Math.floor(x);
+}
+
+function frameRandInt(salt: number, min: number, max: number): number {
+  return min + Math.floor(frameRand(0, salt) * (max - min + 1));
+}
+
+// ---- Frame path helpers ----
+type FramePathPoint = Readonly<{
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  nx: number;
+  ny: number;
+}>;
+
+function unitVector(x: number, y: number): Readonly<{ x: number; y: number }> {
+  const len = Math.hypot(x, y) || 1;
+  return { x: x / len, y: y / len };
+}
+
+function quadPoint(
+  p0: Readonly<{ x: number; y: number }>,
+  p1: Readonly<{ x: number; y: number }>,
+  p2: Readonly<{ x: number; y: number }>,
+  t: number,
+): FramePathPoint {
+  const mt = 1 - t;
+  const x = mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x;
+  const y = mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y;
+  const dx = 2 * mt * (p1.x - p0.x) + 2 * t * (p2.x - p1.x);
+  const dy = 2 * mt * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
+  const tan = unitVector(dx, dy);
+  const norm = unitVector(-tan.y, tan.x);
+  return { x, y, tx: tan.x, ty: tan.y, nx: norm.x, ny: norm.y };
+}
+
+function sampleFramePath(w: number, h: number, cfg: FrameDrawConfig, t: number): FramePathPoint {
+  const x0 = cfg.inset;
+  const y0 = cfg.inset;
+  const x1 = w - cfg.inset;
+  const y1 = h - cfg.inset;
+  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+
+  const topLen = Math.max(1, x1 - x0 - c * 2);
+  const sideLen = Math.max(1, y1 - y0 - c * 2);
+  const curveLen = c * 1.58;
+  const total = topLen * 2 + sideLen * 2 + curveLen * 4;
+  let d = ((t % 1) + 1) % 1 * total;
+
+  const take = (len: number): number | undefined => {
+    if (d <= len) return d / len;
+    d -= len;
+    return undefined;
+  };
+
+  let u = take(topLen);
+  if (u !== undefined) {
+    return { x: x0 + c + topLen * u, y: y0, tx: 1, ty: 0, nx: 0, ny: -1 };
+  }
+
+  u = take(curveLen);
+  if (u !== undefined) {
+    return quadPoint({ x: x1 - c, y: y0 }, { x: x1 - c, y: y0 + c }, { x: x1, y: y0 + c }, u);
+  }
+
+  u = take(sideLen);
+  if (u !== undefined) {
+    return { x: x1, y: y0 + c + sideLen * u, tx: 0, ty: 1, nx: 1, ny: 0 };
+  }
+
+  u = take(curveLen);
+  if (u !== undefined) {
+    return quadPoint({ x: x1, y: y1 - c }, { x: x1 - c, y: y1 - c }, { x: x1 - c, y: y1 }, u);
+  }
+
+  u = take(topLen);
+  if (u !== undefined) {
+    return { x: x1 - c - topLen * u, y: y1, tx: -1, ty: 0, nx: 0, ny: 1 };
+  }
+
+  u = take(curveLen);
+  if (u !== undefined) {
+    return quadPoint({ x: x0 + c, y: y1 }, { x: x0 + c, y: y1 - c }, { x: x0, y: y1 - c }, u);
+  }
+
+  u = take(sideLen);
+  if (u !== undefined) {
+    return { x: x0, y: y1 - c - sideLen * u, tx: 0, ty: -1, nx: -1, ny: 0 };
+  }
+
+  u = d / curveLen;
+  return quadPoint({ x: x0, y: y0 + c }, { x: x0 + c, y: y0 + c }, { x: x0 + c, y: y0 }, u);
+}
 function drawWoodGrain(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   ctx.save();
 
@@ -88,103 +187,238 @@ function drawGoldHighlight(ctx: CanvasRenderingContext2D, w: number, h: number, 
   ctx.lineCap = "round";
   ctx.translate(-0.9, -0.9);
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(94% 0.065 96 / 0.74)";
-  ctx.lineWidth = 0.9;
+  ctx.strokeStyle = "oklch(91% 0.055 96 / 0.52)";
+  ctx.lineWidth = 0.78;
   ctx.stroke();
   ctx.restore();
 }
 
-function drawGoldPits(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+function drawInnerApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // CHANGED: almost invisible universal aperture depth. Directional shadow is
+  // handled separately so this does not become a full inner glow/stripe.
+  makeFramePath(ctx, w, h, cfg);
+  ctx.clip();
+
+  makeFramePath(ctx, w, h, cfg);
+  ctx.strokeStyle = "oklch(4% 0.02 78 / 0.045)";
+  ctx.lineWidth = 8;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawDirectionalApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
   const x0 = cfg.inset;
   const y0 = cfg.inset;
   const x1 = w - cfg.inset;
   const y1 = h - cfg.inset;
   const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
-
-  // CHANGED: micro-pitting only on straight frame runs. No dash marks and no
-  // corner marks; the earlier longer strokes read as digital hyphens.
-  const pits: readonly (readonly [number, number, number])[] = [
-    [x0 + c + 126, y0 + 0.2, 0.74],
-    [x0 + c + 318, y0 - 0.15, 0.58],
-    [x1 - c - 244, y0 + 0.1, 0.68],
-    [x1 - c - 82, y0 - 0.05, 0.52],
-
-    [x1 + 0.05, y0 + c + 156, 0.62],
-    [x1 - 0.1, y0 + c + 386, 0.54],
-    [x1 + 0.05, y1 - c - 210, 0.66],
-
-    [x1 - c - 142, y1 - 0.1, 0.7],
-    [x0 + c + 212, y1 + 0.05, 0.62],
-    [x0 + c + 420, y1 - 0.15, 0.54],
-
-    [x0 - 0.05, y1 - c - 176, 0.62],
-    [x0 + 0.05, y0 + c + 254, 0.54],
-  ];
+  const strength = Math.max(0.18, Math.cos(theta + Math.PI * 0.25));
 
   ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
-  for (const [x, y, r] of pits) {
-    // CHANGED: circular pocks avoid obvious vertical/horizontal dash artifacts.
-    ctx.fillStyle = "oklch(16% 0.035 72 / 0.22)";
+  // CHANGED: shadow only the right and bottom aperture edges. This keeps the
+  // upper-left light model coherent and avoids a uniform glowing outline.
+  ctx.strokeStyle = `oklch(5% 0.026 78 / ${0.10 + strength * 0.08})`;
+  ctx.lineWidth = 3.4;
+
+  ctx.beginPath();
+  ctx.moveTo(x1 - 1.8, y0 + c + 42);
+  ctx.lineTo(x1 - 1.8, y1 - c - 54);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x0 + c + 64, y1 - 1.8);
+  ctx.lineTo(x1 - c - 52, y1 - 1.8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawDirectionalEdgeShade(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
+  const x0 = cfg.inset;
+  const y0 = cfg.inset;
+  const x1 = w - cfg.inset;
+  const y1 = h - cfg.inset;
+  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+  const strength = Math.max(0.22, Math.cos(theta + Math.PI * 0.25));
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = `oklch(7% 0.03 74 / ${0.10 + strength * 0.07})`;
+  ctx.lineWidth = 1.05;
+
+  // CHANGED: subtle opposite-edge shading, paired with the top-left light source.
+  // Keep this grouped for future directional movement.
+  ctx.beginPath();
+  ctx.moveTo(x1 + 0.7, y0 + c + 58);
+  ctx.lineTo(x1 + 0.7, y1 - c - 80);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x0 + c + 82, y1 + 0.8);
+  ctx.lineTo(x1 - c - 70, y1 + 0.8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawGoldPits(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  ctx.save();
+
+  // CHANGED: pocks now sample the actual frame path instead of fixed top/side
+  // coordinates. This keeps every dent on the gilt path, including the inverse
+  // corners, and prevents marks from floating in the wood.
+  const pitCount = frameRandInt(31, 18, 28);
+
+  for (let i = 0; i < pitCount; i += 1) {
+    const t = (i / pitCount + frameRand(i, 32) * 0.05) % 1;
+    const p = sampleFramePath(w, h, cfg, t);
+    const offset = (frameRand(i, 33) - 0.5) * 2.9;
+    const x = p.x + p.nx * offset;
+    const y = p.y + p.ny * offset;
+    const r = 0.46 + frameRand(i, 34) * 0.58;
+    const rot = (frameRand(i, 35) - 0.5) * 0.55;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(p.ty, p.tx) + rot);
+
+    // CHANGED: the dark center roughens the gilt but remains small enough to
+    // read as surface damage, not ornament.
+    ctx.fillStyle = "oklch(13% 0.032 72 / 0.24)";
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, r, r * 0.72, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "oklch(97% 0.05 96 / 0.26)";
+    // CHANGED: small displaced-metal burr; paired with the dent and aligned to
+    // the local frame tangent instead of screen coordinates.
+    ctx.strokeStyle = "oklch(99% 0.055 98 / 0.34)";
+    ctx.lineWidth = 0.34;
     ctx.beginPath();
-    ctx.arc(x - r * 0.45, y - r * 0.38, r * 0.38, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(r * 0.30, r * 0.28, r * 0.72, Math.PI * 1.85, Math.PI * 2.22);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   ctx.restore();
 }
 
 function drawGoldFlecks(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
-
-  const topStart = x0 + c + 30;
-  const topEnd = x1 - c - 30;
-  const sideStart = y0 + c + 34;
-  const sideEnd = y1 - c - 34;
-
   ctx.save();
 
-  // CHANGED: small flecks/noise instead of line glints. They stay on straight
-  // frame runs and make the gilt rougher without producing obvious hyphens.
-  for (let i = 0; i < 42; i += 1) {
-    const t = ((i * 37) % 100) / 100;
-    const side = i % 4;
-    const bright = i % 5 === 0;
-    const r = bright ? 0.55 : 0.38;
-    let x = 0;
-    let y = 0;
+  // CHANGED: randomized count and fully path-sampled placement. The flecks now
+  // respect the inverse-corner path rather than the canvas box.
+  const fleckCount = frameRandInt(41, 82, 128);
 
-    if (side === 0) {
-      x = topStart + (topEnd - topStart) * t;
-      y = y0 + Math.sin(i * 1.91) * 1.2;
-    } else if (side === 1) {
-      x = x1 + Math.cos(i * 1.47) * 1.1;
-      y = sideStart + (sideEnd - sideStart) * t;
-    } else if (side === 2) {
-      x = topStart + (topEnd - topStart) * t;
-      y = y1 + Math.sin(i * 1.63) * 1.2;
-    } else {
-      x = x0 + Math.cos(i * 1.39) * 1.1;
-      y = sideStart + (sideEnd - sideStart) * t;
-    }
+  for (let i = 0; i < fleckCount; i += 1) {
+    const t = (i / fleckCount + frameRand(i, 42) * 0.028) % 1;
+    const p = sampleFramePath(w, h, cfg, t);
+    const bright = frameRand(i, 43) > 0.86;
+    const r = (bright ? 0.38 : 0.24) * (0.65 + frameRand(i, 44) * 0.78);
+    const offset = (frameRand(i, 45) - 0.5) * 3.1;
+    const x = p.x + p.nx * offset;
+    const y = p.y + p.ny * offset;
 
     ctx.fillStyle = bright
-      ? "oklch(98% 0.055 98 / 0.34)"
-      : "oklch(24% 0.045 76 / 0.18)";
+      ? "oklch(97% 0.045 98 / 0.20)"
+      : "oklch(16% 0.035 76 / 0.16)";
 
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  ctx.restore();
+}
+
+function drawGoldGrain(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
+  ctx.save();
+  ctx.lineCap = "round";
+
+  // CHANGED: randomized count and fully path-sampled scratches/patina. The
+  // corners receive the same surface treatment as the straight runs.
+  const grainCount = frameRandInt(51, 96, 142);
+
+  for (let i = 0; i < grainCount; i += 1) {
+    const t = (i / grainCount + frameRand(i, 52) * 0.022) % 1;
+    const p = sampleFramePath(w, h, cfg, t);
+    const bright = frameRand(i, 53) > 0.90;
+    const len = bright ? 2.8 + frameRand(i, 54) * 4.2 : 1.4 + frameRand(i, 55) * 3.0;
+    const offset = (frameRand(i, 56) - 0.5) * 3.2;
+    const x = p.x + p.nx * offset;
+    const y = p.y + p.ny * offset;
+    const lean = (frameRand(i, 57) - 0.5) * 0.42;
+    const tx = p.tx + p.nx * lean;
+    const ty = p.ty + p.ny * lean;
+    const u = unitVector(tx, ty);
+
+    ctx.strokeStyle = bright
+      ? "oklch(98% 0.045 98 / 0.14)"
+      : "oklch(10% 0.03 74 / 0.105)";
+    ctx.lineWidth = bright ? 0.36 : 0.30;
+
+    ctx.beginPath();
+    ctx.moveTo(x - u.x * len * 0.5, y - u.y * len * 0.5);
+    ctx.lineTo(x + u.x * len * 0.5, y + u.y * len * 0.5);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawDirectionalGlints(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
+  const strength = Math.max(0, Math.cos(theta + Math.PI * 0.25));
+  const alpha = 0.30 + strength * 0.24;
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // CHANGED: directional glints now use path samples too. They are biased
+  // toward the upper-left/top runs but no longer draw fixed screen-space lines
+  // that can hang past the corner geometry.
+  const glintCount = frameRandInt(61, 3, 6);
+
+  for (let i = 0; i < glintCount; i += 1) {
+    const t = 0.015 + frameRand(i, 62) * 0.23;
+    const p = sampleFramePath(w, h, cfg, t);
+    const len = 14 + frameRand(i, 63) * 38;
+    const offset = (frameRand(i, 64) - 0.5) * 1.3;
+    const x = p.x + p.nx * offset;
+    const y = p.y + p.ny * offset;
+    const fade = 1 - i / Math.max(1, glintCount);
+
+    ctx.strokeStyle = `oklch(99% 0.052 98 / ${alpha * (0.25 + fade * 0.55)})`;
+    ctx.lineWidth = 0.42 + frameRand(i, 65) * 0.18;
+
+    ctx.beginPath();
+    ctx.moveTo(x - p.tx * len * 0.42, y - p.ty * len * 0.42);
+    ctx.lineTo(x + p.tx * len * 0.58, y + p.ty * len * 0.58);
+    ctx.stroke();
+  }
+
+  // Tiny counter-catch near the lower-right, also path sampled.
+  const counter = sampleFramePath(w, h, cfg, 0.48 + frameRand(0, 66) * 0.035);
+  const len = 10 + frameRand(0, 67) * 14;
+  const offset = (frameRand(0, 68) - 0.5) * 1.2;
+  const x = counter.x + counter.nx * offset;
+  const y = counter.y + counter.ny * offset;
+
+  ctx.strokeStyle = `oklch(98% 0.048 98 / ${alpha * 0.14})`;
+  ctx.lineWidth = 0.34;
+  ctx.beginPath();
+  ctx.moveTo(x - counter.tx * len * 0.5, y - counter.ty * len * 0.5);
+  ctx.lineTo(x + counter.tx * len * 0.5, y + counter.ty * len * 0.5);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -195,7 +429,6 @@ function makeFramePath(ctx: CanvasRenderingContext2D, w: number, h: number, cfg:
   const x1 = w - cfg.inset;
   const y1 = h - cfg.inset;
   const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
-  const lift = Math.min(cfg.lift, c * 0.65);
 
   // CHANGED: canvas equivalent of the old SVG frame motif. The sides stay
   // rectangular, while each corner is cut inward by a soft quadratic scoop.
@@ -232,7 +465,8 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   const gold = OKLCH_ACID_WASHED.straw;
 
   fillFrameExterior(ctx, w, h, cfg);
-  drawGoldUndercut(ctx, w, h, cfg);
+  drawInnerApertureShadow(ctx, w, h, cfg);
+  drawDirectionalApertureShadow(ctx, w, h, cfg);
 
   ctx.save();
   ctx.lineJoin = "round";
@@ -241,34 +475,28 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   // CHANGED: relief is faked with a wide dull under-stroke, a main gold line,
   // and two small offset highlights/shadows.
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.22);
-  ctx.lineWidth = 10;
+  ctx.strokeStyle = set_alpha(gold, 0.075);
+  ctx.lineWidth = 4.6;
   ctx.stroke();
 
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.82);
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = set_alpha(gold, 0.56);
+  ctx.lineWidth = 2.55;
   ctx.stroke();
 
   ctx.save();
-  ctx.translate(-1.2, -1.2);
+  ctx.translate(1.2, 1.2);
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.48);
-  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = set_alpha(gold, 0.18);
+  ctx.lineWidth = 1.15;
   ctx.stroke();
   ctx.restore();
 
-  ctx.save();
-  ctx.translate(1.4, 1.4);
-  makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = set_alpha(gold, 0.26);
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.restore();
-
-  drawGoldHighlight(ctx, w, h, cfg);
+  drawDirectionalEdgeShade(ctx, w, h, cfg);
+  drawGoldGrain(ctx, w, h, cfg);
   drawGoldPits(ctx, w, h, cfg);
   drawGoldFlecks(ctx, w, h, cfg);
+  drawDirectionalGlints(ctx, w, h, cfg);
 
   ctx.restore();
 }
@@ -290,7 +518,7 @@ function syncCanvasSize(canvas: HTMLCanvasElement): Readonly<{ w: number; h: num
   return { w, h };
 }
 
-export function makeFrame(host?: LiveTree) {
+export function make_frame(host?: LiveTree) {
   const tree = hson.liveTree.create.canvas()
     .id.set("page-frame-canvas")
     .css.setMany(frameCss);

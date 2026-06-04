@@ -3,6 +3,9 @@ import { _clamp01, _lerp } from "../../utils/helpers";
 import { row_wind_x } from "./prairie-helpers";
 import type { PrairieRowStatic, PrairieConfig, PrairieFlowerStatic, PrairieFlowerBud } from "./prairie.types";
 
+const FLOWER_ALPHA = 0.58;
+const FLOWER_RADIUS_BOOST = 0.9;
+
 export function make_row_flowers(
     row: PrairieRowStatic,
     cfg: PrairieConfig,
@@ -11,7 +14,7 @@ export function make_row_flowers(
     const out: PrairieFlowerStatic[] = [];
 
     // same attempt count for every row
-    const tries = 12;
+    const tries = 32;
 
     for (let k = 0; k < tries; k++) {
         if (rand() > cfg.flowerChance) continue;
@@ -20,7 +23,7 @@ export function make_row_flowers(
         const xBase = _lerp(xPad, cfg.width - xPad, rand());
 
         const scale = flower_depth_scale(row.t);
-        const radius = _lerp(cfg.flowerRadiusFar, cfg.flowerRadiusNear, scale);
+        const radius = _lerp(cfg.flowerRadiusFar, cfg.flowerRadiusNear, scale) * FLOWER_RADIUS_BOOST;
 
         out.push({
             rowIndex: row.rowIndex,
@@ -30,11 +33,8 @@ export function make_row_flowers(
             yBase: row.yBase - row.bladeHeight * _lerp(0.62, 0.94, rand()),
 
             radius,
-            color: set_alpha(pick_flower_color(rand, k), 0.4),
+            color: set_alpha(pick_flower_color(rand), FLOWER_ALPHA),
             buds: make_flower_buds(row.t, rand),
-
-            bloomAtSec: cfg.flowerBloomWindowSec,
-            bloomDurSec: _lerp(30.35, 60.95, rand()),
 
             phase: rand() * Math.PI * 2,
             wobbleAmp: _lerp(0.05, 0.02, rand()),
@@ -45,23 +45,23 @@ export function make_row_flowers(
     return out;
 }
 
-function pick_flower_color(rand: () => number, k: number): string {
-    // lightness: soft pastel band
-    const l = 0.78 + (rand() - (k * 0.1)) * 0.12;      // 0.78–0.90
+function pick_flower_color(rand: () => number): string {
+    // CHANGED: keep OKLCH channels inside a sane valid range. The old formula
+    // used `k` in the lightness calculation, so higher flower attempt counts
+    // eventually drove lightness negative and produced black/invalid flowers.
+    const l = _lerp(0.70, 0.88, rand());
+    const c = _lerp(0.10, 0.22, rand());
 
-    // chroma: keep it gentle, avoid neon
-    const c = 0.16 + rand() * 0.16;      // 0.06–0.12
-
-    // hue: spring spectrum bias (greens → yellows → pinks → lilac)
+    // hue: spring spectrum bias (greens → cyan → pinks → warm yellow/orange)
     const hueBands = [
-        [90, 140],   // greens
-        [140, 190],  // yellow-green → yellow
-        [300, 340],  // pink
-        [40, 70],    // warm yellow/orange
-    ];
+        [86, 130],    // greens / yellow-greens
+        [150, 190],   // cool green / cyan accents
+        [292, 334],   // pink / lilac
+        [38, 68],     // warm yellow/orange
+    ] as const;
 
-    const band = hueBands[Math.floor(rand() * hueBands.length)];
-    const h = band![0]! + rand() * (band![1]! - band![0]!);
+    const band = hueBands[Math.floor(rand() * hueBands.length)] ?? hueBands[0];
+    const h = band[0] + rand() * (band[1] - band[0]);
 
     return `oklch(${l} ${c} ${h})`;
 }

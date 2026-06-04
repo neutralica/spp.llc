@@ -17,7 +17,7 @@ export function default_prairie_config(width: number, height: number): PrairieCo
     farBladeHeight: 1.5,
 
     nearSampleStep: 2,
-    farSampleStep: 1,
+    farSampleStep: 0.1,
 
     nearSwayAmp: 17,
     farSwayAmp: 0.8,
