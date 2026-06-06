@@ -2,8 +2,7 @@
 
 import { LiveTree } from "hson-live";
 import { prairie_factory } from "./prairie.js";
-import { mk_div_id, mk_span_cls, mk_span_cls_txt, mk_span_id, mk_span_txt } from "../../utils/makers.js";
-import { _TXT, SYS_SERIFfont } from "../../core/consts/ui.consts.js";
+import { _TXT, SPP_MENUfont } from "../../core/consts/ui.consts.js";
 import { cssCONTROL_PANEL, cssGILT_TEXT, cssHSON_BYLINE, cssLINK_BOX, cssLOGO, cssMENU_BOX, cssMENU_BTN_TXT, cssPAGE_HOST, cssPANEL, cssPRAIRIE_HOST, cssPRAIRIE_MASK, cssSTAGE_PRAIRIE } from "../../core/consts/main.css.js";
 import { keys_of } from "../../utils/helpers.js";
 import { relay, type OutcomeAsync } from "intrastructure";
@@ -13,7 +12,7 @@ import { set_global_css } from "./global-css.js";
 import { _create_pkg, type CreatePkg } from "./creator.js";
 import { make_frame } from "../../ui/creation/make-frame.js";
 import type { CssMap } from "hson-live/types";
-import { OKLCH_FOREST, OKLCH_NEUTRALS } from "../../core/consts/oklch.js";
+import { OKLCH_ACID_WASHED, OKLCH_FOREST, OKLCH_NEUTRALS } from "../../core/consts/oklch.js";
 import { set_alpha } from "../../ui/colors/color-helpers.js";
 
 
@@ -22,16 +21,42 @@ export type MenuOpts = "shop" | "terroir" | "tour" | "about";
 export const MENU_OPTS: Record<MenuOpts, MenuOpts> = { shop: "shop", terroir: "terroir", tour: "tour", about: "about" };
 
 /* _create pkg objects */
-const prrMskPkg: CreatePkg = { el: "div", id: "prairie-mask", css: cssPRAIRIE_MASK };
-const prrHost: CreatePkg = { el: "div", id: "prairie-host", css: cssPRAIRIE_HOST }
+const prairieMaskPkg: CreatePkg = { el: "div", id: "prairie-mask", css: cssPRAIRIE_MASK };
+const prairieHostPkg: CreatePkg = { el: "div", id: "prairie-host", css: cssPRAIRIE_HOST }
 const pgHost: CreatePkg = { el: "div", id: "page-host", css: cssPAGE_HOST };
-const mnPnl: CreatePkg = { el: "div", id: "menu-panel", css: cssPANEL }
-const cntPnl: CreatePkg = { el: "div", id: "content-panel", css: cssPANEL };
-const mnBx: CreatePkg = { el: "div", id: "menu-box", css: cssMENU_BOX };
-const sppLgo: CreatePkg = { el: "div", id: "spp-logo", txt: "spp.", css: cssLOGO };
-const lnkBx: CreatePkg = { id: "link-box", el: "span", css: cssLINK_BOX }
-const hsnTxt: CreatePkg = { el: "div", id: "hson-byline", txt: "~ made in hson-live ~", css: cssHSON_BYLINE }
-const btn: CreatePkg = { el: "span", cls: "menu-link", css: cssMENU_BTN_TXT };
+const menuPanelPkg: CreatePkg = { el: "div", id: "menu-panel", css: cssPANEL }
+const menuBoxPkg: CreatePkg = { el: "div", id: "menu-box", css: cssMENU_BOX };
+const sppLogoPkg: CreatePkg = { el: "div", id: "spp-logo", txt: "spp.", css: cssLOGO };
+const linkBoxPkg: CreatePkg = { id: "link-box", el: "span", css: cssLINK_BOX }
+const hsonTxtPkg: CreatePkg = { el: "div", id: "hson-byline", txt: "~ made in hson-live ~", css: cssHSON_BYLINE }
+const buttonPkg: CreatePkg = { el: "span", cls: "menu-link", css: cssMENU_BTN_TXT };
+
+
+
+function eventPathHasClass(ev: PointerEvent, className: string): boolean {
+  return ev.composedPath().some((node) => {
+    return node instanceof Element && node.classList.contains(className);
+  });
+}
+
+
+function isViewportCornerHit(ev: PointerEvent): boolean {
+  // CHANGED: derive the corner restore target from pointer coordinates instead
+  // of relying on a transparent fixed overlay that can fight the page/menu UI.
+  const cornerSize = Math.min(
+    Math.max(window.innerWidth * 0.14, 88),
+    160,
+    window.innerWidth * 0.5,
+    window.innerHeight * 0.5,
+  );
+
+  const left = ev.clientX <= cornerSize;
+  const right = ev.clientX >= window.innerWidth - cornerSize;
+  const top = ev.clientY <= cornerSize;
+  const bottom = ev.clientY >= window.innerHeight - cornerSize;
+
+  return (left || right) && (top || bottom);
+}
 
 const CONTENT_WASHcss: CssMap = {
   position: "absolute",
@@ -39,8 +64,17 @@ const CONTENT_WASHcss: CssMap = {
   zIndex: "4",
   pointerEvents: "none",
   opacity: "0",
-  background: set_alpha(OKLCH_NEUTRALS.oldPaper, 0.5),
   transition: "opacity 420ms ease",
+  color: OKLCH_FOREST.laurelShadow,
+  background: `
+  radial-gradient(circle at 18% 20%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.38)}, transparent 34%),
+  radial-gradient(circle at 82% 12%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.28)}, transparent 28%),
+  linear-gradient(180deg, ${set_alpha(OKLCH_NEUTRALS.paper, 0.62)}, ${set_alpha(OKLCH_NEUTRALS.paper, 0.50)})
+`,
+  boxShadow: `
+  inset 0 0 2.5rem ${set_alpha(OKLCH_FOREST.deepMossBlack, 0.20)},
+  inset 0 0 0 1px ${set_alpha(OKLCH_NEUTRALS.paper, 0.18)}
+`,
 };
 
 const CONTENT_WASH_OPENcss: CssMap = {
@@ -51,8 +85,8 @@ const CONTENT_READINGcss: CssMap = {
   maxWidth: "68ch",
   margin: "clamp(8rem, 18vh, 14rem) auto 0",
   padding: "0 clamp(2rem, 7vw, 6rem)",
-  color: "oklch(18% 0.045 145 / 0.96)",
-  fontFamily: SYS_SERIFfont,
+  color: OKLCH_FOREST.laurelShadow,
+  fontFamily: SPP_MENUfont,
   pointerEvents: "auto",
 };
 
@@ -62,7 +96,7 @@ const CONTENT_HEADcss: CssMap = {
   lineHeight: "0.95",
   fontWeight: "700",
   letterSpacing: "0.02em",
-  color: "oklch(16% 0.05 145 / 0.98)",
+  color: OKLCH_FOREST.laurelShadow,
 };
 
 const CONTENT_BODYcss: CssMap = {
@@ -70,11 +104,12 @@ const CONTENT_BODYcss: CssMap = {
   fontSize: "clamp(1.1rem, 1.9vw, 1.65rem)",
   lineHeight: "1.45",
   letterSpacing: "0.04em",
-  color: "oklch(18% 0.045 145 / 0.88)",
+  color: OKLCH_FOREST.laurelShadow,
   whiteSpace: "pre-wrap",
 };
 
 const MENU_OVER_WASHcss: CssMap = {
+  color: OKLCH_FOREST.laurelShadow,
   position: "relative",
   zIndex: "8",
 };
@@ -83,13 +118,20 @@ const LOGO_OVER_WASHcss: CssMap = {
   position: "relative",
   zIndex: "8",
   color: OKLCH_FOREST.laurelShadow,
-  textShadow: `0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.44)}`,
+  background: "none",
+  backgroundImage: "none",
+  textShadow: `
+  0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.5)},
+  0 -1px 0 ${set_alpha(OKLCH_ACID_WASHED.straw, 0.82)}
+`
 };
 
 const MENU_BTN_OVER_WASHcss: CssMap = {
   position: "relative",
   zIndex: "8",
   color: OKLCH_FOREST.laurelShadow,
+  // CHANGED: keep button text behavior aligned with the logo if inherited
+  // text-fill effects are present.
   textShadow: `0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.42)}`,
 };
 
@@ -114,9 +156,11 @@ function makePrairieContentView(host: LiveTree): PrairieContentView {
   head.id.set("prairie-content-head");
   head.css.setMany(CONTENT_HEADcss);
 
+
   const body = reading.create.tag("div");
   body.id.set("prairie-content-body");
   body.css.setMany(CONTENT_BODYcss);
+
 
   let boundMenuPanel: LiveTree | undefined;
   let boundLogo: LiveTree | undefined;
@@ -127,14 +171,19 @@ function makePrairieContentView(host: LiveTree): PrairieContentView {
 
     if (on) {
       boundMenuPanel.css.setMany(MENU_OVER_WASHcss);
-      boundLogo.css.setMany(LOGO_OVER_WASHcss);
-      for (const b of keys_of(boundBtns)) boundBtns[b].css.setMany(MENU_BTN_OVER_WASHcss);
+      boundLogo.style.setMany(LOGO_OVER_WASHcss);
+      for (const b of keys_of(boundBtns)) {
+        boundBtns[b].style.setMany(MENU_BTN_OVER_WASHcss);
+      }
       return;
     }
 
     boundMenuPanel.css.setMany(cssPANEL);
     boundLogo.css.setMany(cssLOGO);
-    for (const b of keys_of(boundBtns)) boundBtns[b].css.setMany(cssMENU_BTN_TXT);
+    boundLogo.style.clear();
+    for (const b of keys_of(boundBtns)) {
+      boundBtns[b].style.clear();
+    }
   };
 
   return {
@@ -171,42 +220,55 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   stage.empty().css.setMany(cssSTAGE_PRAIRIE)
 
   /* prairie svg host */
-  const prairieHost = _create_pkg(stage, prrHost);
+  const prairieHost = _create_pkg(stage, prairieHostPkg);
   prairie_factory(prairieHost);
   make_frame(prairieHost);
-  const prairieMask = _create_pkg(prairieHost, prrMskPkg);
+  const prairieMask = _create_pkg(prairieHost, prairieMaskPkg);
   /* ui container */
   const pageHost = _create_pkg(stage, pgHost);
 
   /* logo & menu */
-  const menuPanel = _create_pkg(pageHost, mnPnl);
-  const contentPanel = _create_pkg(pageHost, cntPnl);
-  const menuBox = _create_pkg(menuPanel, mnBx);
-  const logo = _create_pkg(menuBox, sppLgo);
+  const menuPanel = _create_pkg(pageHost, menuPanelPkg);
+  const menuBox = _create_pkg(menuPanel, menuBoxPkg);
+  const logo = _create_pkg(menuBox, sppLogoPkg);
 
   /* social & content containers */
   const contentView = makePrairieContentView(pageHost);
   pageHost.append(contentView.tree);
   pageHost.append(makeSocialBox());
-  pageHost.listen.onPointerDown(() => {
+  const restorePrairieView = (): void => {
+    contentView.restorePrairie();
+    view = null;
+  };
+
+  stage.listen.onPointerDown((ev) => {
+    if (eventPathHasClass(ev, "menu-link")) return;
+
+    if (isViewportCornerHit(ev)) {
+      restorePrairieView();
+      return;
+    }
+
     contentView.fadeOutPrairie();
   });
 
   /* menu buttons */
-  const linkBox = _create_pkg(menuBox, lnkBx);
-  const hsonByline = _create_pkg(stage, hsnTxt);
+  const linkBox = _create_pkg(menuBox, linkBoxPkg);
+  _create_pkg(stage, hsonTxtPkg);
 
   const btns: Record<MenuOpts, LiveTree> = {
-    shop: _create_pkg(linkBox, btn).text.set("shop"),
-    about: _create_pkg(linkBox, btn).text.set("about"),
-    tour: _create_pkg(linkBox, btn).text.set("tour"),
-    terroir: _create_pkg(linkBox, btn).text.set("terroir"),
+    shop: _create_pkg(linkBox, buttonPkg).text.set("shop"),
+    about: _create_pkg(linkBox, buttonPkg).text.set("about"),
+    tour: _create_pkg(linkBox, buttonPkg).text.set("tour"),
+    terroir: _create_pkg(linkBox, buttonPkg).text.set("terroir"),
   };
 
   contentView.bindMenuChrome(menuPanel, logo, btns);
 
   keys_of(btns).forEach(b => {
-    btns[b].listen.onPointerDown(() => {
+    btns[b].listen.onPointerDown((ev) => {
+      ev.stopPropagation();
+
       if (view !== b) {
         contentView.setContent(_content[b].head, _content[b].txt);
         contentView.fadeOutPrairie();
@@ -216,10 +278,10 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
         view = null;
       }
     })
-  })
+  });
+
 
   set_global_css();
   // makeFrame(stage);
   return relay.ok();
-
 }

@@ -1,5 +1,5 @@
 import { hson, type LiveTree } from "hson-live";
-import { OKLCH_ACID_WASHED } from "../../core/consts/oklch";
+import { OKLCH_ACID_WASHED, OKLCH_FOREST, OKLCH_NEUTRALS } from "../../core/consts/oklch";
 import { set_alpha } from "../colors/color-helpers";
 
 type FrameDrawConfig = Readonly<{
@@ -21,13 +21,29 @@ const frameCss = {
   height: "100vh",
   pointerEvents: "none",
   zIndex: "40",
+  boxShadow: `
+  inset 0 0 1.5rem ${set_alpha(OKLCH_FOREST.deepMossBlack, 0.30)}`,
 } as const;
 
 const FRAME_OUTER_FILL = "oklch(27% 0.055 83 / 0.88)";
 const WOOD_GRAIN_DARK = "oklch(42% 0.045 78 / 0.12)";
 const WOOD_GRAIN_SOFT = "oklch(68% 0.055 88 / 0.07)";
 const WOOD_KNOT_DARK = "oklch(36% 0.05 72 / 0.10)";
+
 const FRAME_TEXTURE_SEED = Math.random() * 1000;
+const FRAME_BASE_DPR = window.devicePixelRatio || 1;
+
+function frameZoomFactor(): number {
+  // CHANGED: browser zoom changes devicePixelRatio in Chromium and usually in
+  // Safari. Use the load-time DPR as the visual baseline, then compensate draw
+  // dimensions when the user zooms after load.
+  const now = window.devicePixelRatio || FRAME_BASE_DPR;
+  return Math.max(0.5, Math.min(3, now / FRAME_BASE_DPR));
+}
+
+function framePx(n: number): number {
+  return n / frameZoomFactor();
+}
 
 function frameRand(i: number, salt: number): number {
   const x = Math.sin((i + 1) * 127.1 + salt * 311.7 + FRAME_TEXTURE_SEED) * 43758.5453123;
@@ -36,6 +52,19 @@ function frameRand(i: number, salt: number): number {
 
 function frameRandInt(salt: number, min: number, max: number): number {
   return min + Math.floor(frameRand(0, salt) * (max - min + 1));
+}
+
+function frameCornerSize(w: number, h: number, cfg: FrameDrawConfig): number {
+  // CHANGED: keep the ornamental corner visually stable when browser zoom
+  // changes. The canvas still fills the viewport, but the frame motif is drawn
+  // in compensated CSS-pixel units.
+  const inset = frameInsetSize(cfg);
+  const available = Math.max(1, Math.min(w, h) - inset * 2);
+  return Math.min(framePx(cfg.corner), available * 0.22);
+}
+
+function frameInsetSize(cfg: FrameDrawConfig): number {
+  return framePx(cfg.inset);
 }
 
 // ---- Frame path helpers ----
@@ -70,11 +99,12 @@ function quadPoint(
 }
 
 function sampleFramePath(w: number, h: number, cfg: FrameDrawConfig, t: number): FramePathPoint {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+  const inset = frameInsetSize(cfg);
+  const x0 = inset;
+  const y0 = inset;
+  const x1 = w - inset;
+  const y1 = h - inset;
+  const c = frameCornerSize(w, h, cfg);
 
   const topLen = Math.max(1, x1 - x0 - c * 2);
   const sideLen = Math.max(1, y1 - y0 - c * 2);
@@ -169,30 +199,6 @@ function drawWoodGrain(ctx: CanvasRenderingContext2D, w: number, h: number): voi
   ctx.restore();
 }
 
-function drawGoldUndercut(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
-  ctx.save();
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  ctx.translate(1.8, 1.8);
-  makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(18% 0.045 76 / 0.38)";
-  ctx.lineWidth = 2.35;
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawGoldHighlight(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
-  ctx.save();
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  ctx.translate(-0.9, -0.9);
-  makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(91% 0.055 96 / 0.52)";
-  ctx.lineWidth = 0.78;
-  ctx.stroke();
-  ctx.restore();
-}
-
 function drawInnerApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
   ctx.save();
   ctx.lineJoin = "round";
@@ -209,14 +215,14 @@ function drawInnerApertureShadow(ctx: CanvasRenderingContext2D, w: number, h: nu
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(5% 0.024 78 / 0.16)";
-  ctx.lineWidth = 5.2;
+  ctx.strokeStyle = "oklch(9% 0.026 78 / 0.41)";
+  ctx.lineWidth = 2.15;
   ctx.stroke();
   ctx.restore();
 
   makeFramePath(ctx, w, h, cfg);
-  ctx.strokeStyle = "oklch(9% 0.026 78 / 0.11)";
-  ctx.lineWidth = 1.15;
+  ctx.strokeStyle = "oklch(2% 0.024 78 / 0.046)";
+  ctx.lineWidth = 10.2;
   ctx.stroke();
 
   ctx.restore();
@@ -246,11 +252,12 @@ function drawDirectionalApertureShadow(ctx: CanvasRenderingContext2D, w: number,
 }
 
 function drawDirectionalEdgeShade(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+  const inset = frameInsetSize(cfg);
+  const x0 = inset;
+  const y0 = inset;
+  const x1 = w - inset;
+  const y1 = h - inset;
+  const c = frameCornerSize(w, h, cfg);
   const strength = Math.max(0.22, Math.cos(theta + Math.PI * 0.25));
 
   ctx.save();
@@ -285,10 +292,10 @@ function drawGoldPits(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: 
   for (let i = 0; i < pitCount; i += 1) {
     const t = (i / pitCount + frameRand(i, 32) * 0.05) % 1;
     const p = sampleFramePath(w, h, cfg, t);
-    const offset = (frameRand(i, 33) - 0.5) * 2.9;
+    const offset = framePx((frameRand(i, 33) - 0.5) * 2.9);
     const x = p.x + p.nx * offset;
     const y = p.y + p.ny * offset;
-    const r = 0.46 + frameRand(i, 34) * 0.58;
+    const r = framePx(0.46 + frameRand(i, 34) * 0.58);
     const rot = (frameRand(i, 35) - 0.5) * 0.55;
 
     ctx.save();
@@ -327,8 +334,8 @@ function drawGoldFlecks(ctx: CanvasRenderingContext2D, w: number, h: number, cfg
     const t = (i / fleckCount + frameRand(i, 42) * 0.028) % 1;
     const p = sampleFramePath(w, h, cfg, t);
     const bright = frameRand(i, 43) > 0.86;
-    const r = (bright ? 0.38 : 0.24) * (0.65 + frameRand(i, 44) * 0.78);
-    const offset = (frameRand(i, 45) - 0.5) * 3.1;
+    const r = framePx((bright ? 0.38 : 0.24) * (0.65 + frameRand(i, 44) * 0.78));
+    const offset = framePx((frameRand(i, 45) - 0.5) * 3.1);
     const x = p.x + p.nx * offset;
     const y = p.y + p.ny * offset;
 
@@ -356,8 +363,8 @@ function drawGoldGrain(ctx: CanvasRenderingContext2D, w: number, h: number, cfg:
     const t = (i / grainCount + frameRand(i, 52) * 0.022) % 1;
     const p = sampleFramePath(w, h, cfg, t);
     const bright = frameRand(i, 53) > 0.90;
-    const len = bright ? 2.8 + frameRand(i, 54) * 4.2 : 1.4 + frameRand(i, 55) * 3.0;
-    const offset = (frameRand(i, 56) - 0.5) * 3.2;
+    const len = framePx(bright ? 2.8 + frameRand(i, 54) * 4.2 : 1.4 + frameRand(i, 55) * 3.0);
+    const offset = framePx((frameRand(i, 56) - 0.5) * 3.2);
     const x = p.x + p.nx * offset;
     const y = p.y + p.ny * offset;
     const lean = (frameRand(i, 57) - 0.5) * 0.42;
@@ -368,7 +375,7 @@ function drawGoldGrain(ctx: CanvasRenderingContext2D, w: number, h: number, cfg:
     ctx.strokeStyle = bright
       ? "oklch(98% 0.045 98 / 0.14)"
       : "oklch(10% 0.03 74 / 0.105)";
-    ctx.lineWidth = bright ? 0.36 : 0.30;
+    ctx.lineWidth = framePx(bright ? 0.36 : 0.30);
 
     ctx.beginPath();
     ctx.moveTo(x - u.x * len * 0.5, y - u.y * len * 0.5);
@@ -380,11 +387,12 @@ function drawGoldGrain(ctx: CanvasRenderingContext2D, w: number, h: number, cfg:
 }
 
 function drawDirectionalGlints(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig, theta = -Math.PI * 0.25): void {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+  const inset = frameInsetSize(cfg);
+  const x0 = inset;
+  const y0 = inset;
+  const x1 = w - inset;
+  const y1 = h - inset;
+  const c = frameCornerSize(w, h, cfg);
   const strength = Math.max(0, Math.cos(theta + Math.PI * 0.25));
   const alpha = 0.30 + strength * 0.22;
 
@@ -436,11 +444,12 @@ function drawDirectionalGlints(ctx: CanvasRenderingContext2D, w: number, h: numb
 }
 
 function makeFramePath(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: FrameDrawConfig): void {
-  const x0 = cfg.inset;
-  const y0 = cfg.inset;
-  const x1 = w - cfg.inset;
-  const y1 = h - cfg.inset;
-  const c = Math.min(cfg.corner, Math.max(18, Math.min(w, h) * 0.08));
+  const inset = frameInsetSize(cfg);
+  const x0 = inset;
+  const y0 = inset;
+  const x1 = w - inset;
+  const y1 = h - inset;
+  const c = frameCornerSize(w, h, cfg);
 
   // CHANGED: canvas equivalent of the old SVG frame motif. The sides stay
   // rectangular, while each corner is cut inward by a soft quadratic scoop.
@@ -488,19 +497,19 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
   // and two small offset highlights/shadows.
   makeFramePath(ctx, w, h, cfg);
   ctx.strokeStyle = set_alpha(gold, 0.12);
-  ctx.lineWidth = 4.85;
+  ctx.lineWidth = framePx(4.85);
   ctx.stroke();
 
   makeFramePath(ctx, w, h, cfg);
   ctx.strokeStyle = set_alpha(gold, 0.68);
-  ctx.lineWidth = 2.65;
+  ctx.lineWidth = framePx(2.65);
   ctx.stroke();
 
   ctx.save();
-  ctx.translate(1.2, 1.2);
+  ctx.translate(framePx(1.2), framePx(1.2));
   makeFramePath(ctx, w, h, cfg);
   ctx.strokeStyle = set_alpha(gold, 0.24);
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = framePx(1.2);
   ctx.stroke();
   ctx.restore();
 
@@ -512,19 +521,23 @@ function strokeFrame(ctx: CanvasRenderingContext2D, w: number, h: number, cfg: F
 
   ctx.restore();
 }
-
-function syncCanvasSize(canvas: HTMLCanvasElement): Readonly<{ w: number; h: number }> {
-  const rect = canvas.getBoundingClientRect();
+function syncCanvasSize(canvas: LiveTree): Readonly<{ w: number; h: number }> {
+  const rect = canvas.dom.must.rect();
   const dpr = window.devicePixelRatio || 1;
+
   const w = Math.max(1, Math.round(rect.width));
   const h = Math.max(1, Math.round(rect.height));
   const pxW = Math.max(1, Math.round(w * dpr));
   const pxH = Math.max(1, Math.round(h * dpr));
 
-  if (canvas.width !== pxW) canvas.width = pxW;
-  if (canvas.height !== pxH) canvas.height = pxH;
+  // CHANGED: DOMRect is only a measurement. The canvas backing store must be
+  // resized through the canvas width/height attributes.
+  canvas.attr.setMany({
+    width: String(pxW),
+    height: String(pxH),
+  });
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.canvas.ctx2d();
   if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   return { w, h };
@@ -538,24 +551,25 @@ export function make_frame(host?: LiveTree) {
   if (host) host.append(tree);
 
   const draw = (): void => {
-    const el = tree.dom.el();
-    if (!(el instanceof HTMLCanvasElement)) return;
 
-    const ctx = el.getContext("2d");
-    if (!ctx) return;
+    const ctx = tree.canvas.ctx2d();
 
-    const { w, h } = syncCanvasSize(el);
+    const { w, h } = syncCanvasSize(tree);
+    if (!ctx) { return; }
     ctx.clearRect(0, 0, w, h);
     strokeFrame(ctx, w, h, DEFAULT_FRAME);
   };
 
   const onResize = (): void => draw();
+  tree.listen.window.on("resize", onResize);
 
-  window.addEventListener("resize", onResize);
+
   requestAnimationFrame(draw);
 
   const destroy = (): void => {
-    window.removeEventListener("resize", onResize);
+    // CHANGED: the listener was registered on `window`, so remove it from the
+    // same target during teardown.
+    tree.listen.window.on("resize", onResize).off();
     tree.removeSelf();
   };
 

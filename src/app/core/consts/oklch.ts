@@ -148,14 +148,14 @@ export const OKLCH_ACID_WASHED = {
 };
 
 export const OKLCH_FOREST = {
-  blackPine: "oklch(13% 0.025 155)",
-  deepMossBlack: "oklch(16% 0.035 145)",
-  spruceNight: "oklch(18% 0.040 158)",
-  laurelShadow: "oklch(20% 0.035 135)",
-  bottleGlass: "oklch(22% 0.045 165)",
-  wetFern: "oklch(25% 0.050 148)",
-  oldHedge: "oklch(28% 0.045 138)",
-  cypressInk: "oklch(17% 0.030 172)",
+  blackPine: "oklch(0.13 0.025 155)",
+  deepMossBlack: "oklch(0.16 0.035 145)",
+  spruceNight: "oklch(0.18 0.040 158)",
+  laurelShadow: "oklch(0.50 0.035 135)",
+  bottleGlass: "oklch(0.22 0.045 165)",
+  wetFern: "oklch(0.25 0.050 148)",
+  oldHedge: "oklch(0.28 0.045 138)",
+  cypressInk: "oklch(0.17 0.030 172)",
 } as const;
 
 export const OKLCH_FLEURS = {

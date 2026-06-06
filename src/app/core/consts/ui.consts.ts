@@ -42,10 +42,9 @@ export const LISTcol = OKLCH_FLEURS.greyLilac;
 export const COPYRITEcol = $gry_.dimmer;
 export const URLcol = ACID_WASH_RGBA.softBlue;
 
-
-export const SYS_SERIFfont = "'Cormorant', serif";
+export const SPP_ITALfont = "'SPP Italic', monospace";
+export const SPP_MENUfont = "'SPP Logo', monospace";/* "'Cormorant', serif"; */
 // export const SYS_SMOLfont = "'Tiny5', Trebuchet MS"
-export const SYS_MONOfont = "'Inconsolata', Monaco, monospace";
 export const SYS_SANSfont = "'IBM Plex Sans', sans-serif";
 export const $SKYBACK_GRAD = `linear-gradient(${rng360()}deg, hsl(210 45% 82%), hsl(210 45% 52%))`;
 
@@ -53,14 +52,11 @@ export const GRID_GAPstr = "2px";
 export const $CODE_FONT_SIZE = _TXT.main;
 export const $PANEL_HIDDEN = 'panel-hidden';
 
-// either do this or don't:
-export const ABOUT_ROOT_ID = "about-root";
 
 export const $svg_filter = `saturate(0.9) sepia(0.10)  contrast(0.9) brightness(1.04)`
 export const FADE_1col = OKLCH_NEUTRALS.silver;
 
 
-export const GRAFFITIcol = set_alpha(ACID_WASH_RGBA.mutedViolet, 0.2);
 
 export const _COLS = {
   backlo: deepBack,
