@@ -50,7 +50,7 @@ export const cssSCROLL: CssMap = {
   _hover: {
     scrollbarColor: "rgba(238, 220, 158, 0.82) rgba(20, 40, 28, 0.18)",
   },
-// TODO -- abandon webkit defs (but do define moz)
+  // TODO -- abandon webkit defs (but do define moz)
   "::-webkit-scrollbar": {
     width: "8px",
   },
@@ -134,7 +134,7 @@ export const cssLINK_BOX: CssMap = {
 /* svg attrs & css */
 export const cssMENU_FX: CssMap = {
   userSelect: "none",
-  textShadow: "0 0 5px " + OKLCH_FLEURS.pollen,
+  textShadow: "1px 2px 5px " + OKLCH_FLEURS.pollen,
 };
 
 
@@ -154,9 +154,27 @@ export const cssMENU_BOX: CssMap = {
   gridTemplateColumns: "1fr 3fr 2fr"
 };
 
-export const cssLOGO: CssMap = {
+export const cssLOGO_BASE_TEXT = {
+  gridColumn: "1",
+  position: "relative",
+  gridRow: "1",
+  fontStyle: "italic",
+  fontSize: _TXT.heading,
+  fontFamily: SPP_ITALfont,
+  color: OKLCH_ACID_WASHED.straw,
+  width: "fit-content",
+  justifySelf: "center",
+  pointerEvents: "none",
+}
+
+export const cssLOGO_MAIN: CssMap = {
   ...cssMENU_FX,
   ...cssGILT_TEXT,
+  ...cssLOGO_BASE_TEXT,
+
+};
+export const SHADOW_LOGOcss: CssMap = {
+  ...cssMENU_FX,
   gridColumn: "1",
   gridRow: "1",
   fontStyle: "italic",

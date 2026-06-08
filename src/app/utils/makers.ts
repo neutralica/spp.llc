@@ -12,3 +12,4 @@ export const mk_span_id = (lt: LiveTree, id: string ) => lt.create.span().id.set
 
 export const mk_section = (lt: LiveTree) => lt.create.section();
 export const mk_section_cls = (lt: LiveTree, cls: string | string[]) => lt.create.section().classlist.set(cls);
+export const mk_section_id = (lt: LiveTree, id: string ) => lt.create.section().id.set(id);

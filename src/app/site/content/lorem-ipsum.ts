@@ -1,8 +1,8 @@
 /* content.ts */
 
 import { _rng_xs32 } from "../../utils/helpers";
-import { MENU_OPTS, type MenuOpts } from "../prairie/mount-prairie";
-import { rng360 } from "../prairie/prairie-helpers";
+import type { MenuOpts } from "../../core/types/core.types";
+// import type { MenuOpts } from "../prairie/mount-prairie";
 
 /* holder for text and assets/instructions for assembling content/rendering */
 export const longasstext = () => {

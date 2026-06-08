@@ -1,6 +1,5 @@
 // prairie.ts
-// first draft: animated grassy plain / curved-slope illusion
-// CHANGED: keeps static row data cached; only path geometry updates per frame
+// animated grassy plain / curved-slope illusion
 
 import { hson, type LiveTree } from "hson-live";
 import { _clamp01, _clampLoHi, _lerp } from "../../utils/helpers";
@@ -101,7 +100,7 @@ function make_row_static(
   };
 }
 
-// CHANGED: builds one closed strip path
+// Builds one closed strip path.
 function build_row_path_d(
   row: PrairieRowStatic,
   cfg: PrairieConfig,
@@ -157,8 +156,7 @@ function create_svg(width: number, height: number): SvgLiveTree {
     .css.setMany({
       display: "block",
 
-      // CHANGED: keep the prairie in its own fixed drawing world. The host clips
-      // it instead of letting the SVG stretch/compress with resize or zoom.
+      // Keep the prairie in its own fixed drawing world; the host clips it.
       width: `${width}px`,
       height: `${height}px`,
       maxWidth: "none",
@@ -181,10 +179,7 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
 ): PrairieRuntime {
   const viewportWidth = Math.max(1, Math.round(host.dom.clientSize()?.width || 1200));
   const viewportHeight = Math.max(1, Math.round(host.dom.clientSize()?.height || 700));
-  // CHANGED: give the prairie a stable vertical drawing world, then position
-  // that world so the horizon stays at a consistent screen ratio under resize
-  // and browser zoom. This avoids vertical SVG stretching while preventing the
-  // bottom sky strip.
+  // Stable vertical world; position it so the horizon survives resize/zoom.
   const height = Math.max(
     PRAIRIE_MIN_WORLD_HEIGHT,
     viewportHeight + PRAIRIE_VERTICAL_BLEED,
@@ -213,8 +208,6 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
     position: "relative",
   });
 
-  // Removed first row-construction loop
-
   const flowerPaths: SvgLiveTree[] = [];
   const flowers: PrairieFlowerStatic[] = [];
 
@@ -232,7 +225,6 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
     svg.append(rowPath);
     paths.push(rowPath);
 
-    // ADDED: flowers for this row
     const rowFlowers = make_row_flowers(row, cfg, rand);
 
     for (const flower of rowFlowers) {
@@ -265,9 +257,7 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
 
     const timeSec = timeMs * 0.001;
 
-    // CHANGED: start the prairie centered on refresh. `timeMs` is the browser's
-    // document animation timestamp, so using it directly can start the pan at an
-    // arbitrary phase and make the prairie appear anchored to one side.
+    // Use elapsed local animation time so the prairie starts centered.
     startMs ??= timeMs;
     const elapsedSec = (timeMs - startMs) * 0.001;
 
@@ -291,9 +281,7 @@ export function prairie_factory(host: LiveTree, config?: Partial<PrairieConfig>
     const rawPanX = initialPanCenter + panPhase * panAmp;
     const minPanX = Math.min(0, visibleWidth - cssWorldWidth);
     const panX = _clampLoHi(rawPanX, minPanX, 0);
-    // CHANGED: keep the horizon visually stable instead of anchoring the SVG to
-    // the top. Browser zoom changes the CSS-pixel viewport; this compensates by
-    // sliding the fixed prairie world behind the frame rather than stretching it.
+    // Keep the horizon visually stable under browser zoom.
     const desiredHorizonY = visibleHeight * PRAIRIE_HORIZON_SCREEN_RATIO;
     const displayedHorizonY = cfg.horizonY / zoomFactor;
     const rawPanY = desiredHorizonY - displayedHorizonY;

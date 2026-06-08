@@ -1,7 +1,7 @@
 import { hson } from "hson-live";
 import { OKLCH_ACID_WASHED, OKLCH_NEUTRALS } from "../../core/consts/oklch";
 import { set_alpha } from "./../colors/color-helpers";
-import { _create_pkg, type CreatePkg } from "../../site/prairie/creator";
+import { _create_pkg, type CreatePkg } from "../../site/prairie/pkg";
 import { cssCONTENT_HEADER, cssCONTENT_TXT, cssCONTENT_BOX, cssCONTENT_BACK, cssFRAME } from "./../creation/content.css";
 
 const frameBase = {

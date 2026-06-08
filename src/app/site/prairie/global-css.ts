@@ -50,7 +50,7 @@ export function set_global_css() {
         gridTemplateRows: "auto minmax(0, 1fr)",
     });
 
-    gcss.media(BP_PHONE).sel("#menu-box").setMany({
+    gcss.media(BP_TABLET).sel("#menu-box").setMany({
         marginTop: "1rem",
         marginLeft: "1rem",
         marginRight: "1rem",
@@ -60,20 +60,20 @@ export function set_global_css() {
         gridTemplateColumns: "1fr",
     });
 
-    gcss.media(BP_PHONE).sel("#menu-box .logo").setMany({
+    gcss.media(BP_TABLET).sel("#menu-box .logo").setMany({
         display: "block",
         marginBottom: "0.25rem",
         gridRow: "1",
         gridColumn: "1",
         alignSelf: "center"
     });
-    gcss.media(BP_PHONE).sel("span#link-box").setMany({
+    gcss.media(BP_TABLET).sel("span#link-box").setMany({
         gridRow: "2",
         gridColumn: "1",
         display: "flex",
         flexDirection: "row"
     });
-    gcss.media(BP_PHONE).sel("#content-panel .content.box").setMany({
+    gcss.media(BP_TABLET).sel("#content-panel .content.box").setMany({
         width: "calc(100vw - 1.5rem)",
         height: "calc(100vh - 9rem)",
         marginInline: "auto",

@@ -1,5 +1,5 @@
 import { hson } from "hson-live"
-import { _create_pkg } from "../../site/prairie/creator"
+import { _create_pkg } from "../../site/prairie/pkg"
 import { hsl } from "../../site/prairie/prairie-helpers"
 import { cssOVERLAY, cssSTAGE_PRAIRIE } from "../../core/consts/main.css";
 import type { OklchColor, RgbaColor } from "../colors/colors.types";
