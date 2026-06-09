@@ -10,14 +10,14 @@ export const CONTENT_WASH_OPENcss: CssMap = {
 export const CONTENT_READINGcss: CssMap = {
   maxWidth: "68ch",
   margin: "clamp(8rem, 18vh, 14rem) auto 0",
-  padding: "0 clamp(2rem, 7vw, 6rem)",
+  padding: "5rem clamp(2rem, 7vw, 6rem)",
   color: OKLCH_FOREST.laurelShadow,
   fontFamily: SPP_MENUfont,
   pointerEvents: "auto",
 };
 export const CONTENT_HEADcss: CssMap = {
   margin: "0 0 1.6rem",
-  fontSize: "clamp(2.2rem, 5vw, 5rem)",
+  fontSize: "clamp(1.2rem, 5vw, 3rem)",
   lineHeight: "0.95",
   fontWeight: "700",
   letterSpacing: "0.02em",
@@ -51,6 +51,7 @@ export const MENU_BTN_OVER_WASHcss: CssMap = {
   position: "relative",
   zIndex: "8",
   color: OKLCH_FOREST.laurelShadow,
+  visibility: "visible",
   // CHANGED: keep button text behavior aligned with the logo if inherited
   // text-fill effects are present.
   // textShadow: `0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.42)}`,
@@ -66,9 +67,9 @@ export const CONTENT_WASHcss: CssMap = {
   transition: "opacity 420ms ease",
   color: OKLCH_FOREST.laurelShadow,
   background: `
-  radial-gradient(circle at 18% 20%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.68)}, transparent 34%),
-  radial-gradient(circle at 82% 12%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.58)}, transparent 28%),
-  linear-gradient(180deg, ${set_alpha(OKLCH_NEUTRALS.paper, 0.82)}, ${set_alpha(OKLCH_NEUTRALS.paper, 0.50)})
+  radial-gradient(circle at 18% 20%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.88)}, transparent 34%),
+  radial-gradient(circle at 82% 12%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.78)}, transparent 28%),
+  linear-gradient(180deg, ${set_alpha(OKLCH_NEUTRALS.paper, 0.92)}, ${set_alpha(OKLCH_NEUTRALS.paper, 0.80)})
 `,
   boxShadow: `
   inset 0 0 2.5rem ${set_alpha(OKLCH_FOREST.deepMossBlack, 0.20)},

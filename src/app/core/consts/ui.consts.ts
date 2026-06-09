@@ -5,6 +5,7 @@ import { set_alpha } from "../../ui/colors/color-helpers";
 import { $gry_, ACID_WASH_RGBA, bckColor, bcklight, deepBack } from "./colors.consts";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS, OKLCH_VIBRANT } from "./oklch";
 import { rng360 } from "../../site/prairie/prairie-helpers";
+import type { MenuOpts } from "../types/core.types";
 
 export const _TXT = {
   smol: "0.75rem",
@@ -20,6 +21,8 @@ export const TXTcol_MENU = OKLCH_FLEURS.electricCyan;
 export const TXTcol_MAIN = OKLCH_VIBRANT.yellowBrightEyesStaringSun;
 export const TXTcol_CODE = OKLCH_VIBRANT.blueCobalt;
 export const TXTcol_ALT = OKLCH_FLEURS.electricCyan;
+export const colTXT_BYLINE = OKLCH_ACID_WASHED.straw;
+
 const scrollA = "rgba(238, 220, 158, 0.82)"
 
 
@@ -65,4 +68,5 @@ export const _COLS = {
   sky: "hsl(210 45% 15%)",
   scrollA
 };
+export const MENU_OPTS: Record<MenuOpts, MenuOpts> = { shop: "shop", friends: "friends", tour: "tour", about: "about" };
 

@@ -1,4 +1,6 @@
-# hson.livetree (LiveTree API)
+SOMEWHAT OUT OF DATE
+
+<!-- # hson.livetree (LiveTree API)
 Updated: 2026-03-07
 
 Overview
@@ -243,4 +245,4 @@ Notes
 
 - LiveTree is DOM-optional. All DOM-facing APIs no-op safely when not mounted.
 - Attributes are normalized to lowercase internally.
-- For precise tag creation and full CSS/animation APIs, consult `livetree-methods-list.md` and `css-manager-api.md`.
+- For precise tag creation and full CSS/animation APIs, consult `livetree-methods-list.md` and `css-manager-api.md`. -->

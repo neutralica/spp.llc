@@ -32,4 +32,4 @@ export type Fmt = "json" | "hson" | "html";
 // import type { CreatePkg } from "./pkg.js";
 // import { cssHSON_BYLINE, cssLINK_BOX, cssMENU_BOX, cssMENU_BTN_TXT, cssPAGE_HOST, cssPANEL, cssPRAIRIE_HOST, cssPRAIRIE_MASK } from "../../core/consts/main.css.js";
 
-export type MenuOpts = "shop" | "terroir" | "tour" | "about";
+export type MenuOpts = "shop" | "friends" | "tour" | "about";

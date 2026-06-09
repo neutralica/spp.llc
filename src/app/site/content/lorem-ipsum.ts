@@ -58,21 +58,21 @@ const createContentString = (length: number, key: MenuOpts): string => {
 }
 
 export const _content = {
-    shop: {
-        head: "SHOP CONTENT HEAD",
-        txt: createContentString(rngHundred(), "shop")
-    },
     about: {
-        head: "ABOUT CONTENT HEAD",
-        txt: createContentString(rngHundred(), "about")
+        head: "ABOUT",
+        txt: "we are a flower shop you can eat for restaurants"
+    },
+    shop: {
+        head: "SHOP our seasonal botanicals",
+        txt: "we got the good shit here trust. photos coming soon!"
     },
     tour: {
-        head: "TOUR CONTENT HEAD",
-        txt: createContentString(rngHundred(), "tour")
+        head: "TOUR",
+        txt: "[009] days since last visitor mauled by ticks"
     },
-    terroir: {
-        head: "TERROIR CONTENT HEAD",
-        txt: createContentString(rngHundred(), "terroir")
+    friends: {
+        head: "FRIENDS",
+        txt: "you can find our botanicals at these fine eateries and drinkeries"
     }
 
 }

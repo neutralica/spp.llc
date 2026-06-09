@@ -1,6 +1,6 @@
 import type { CssMap } from "hson-live/types";
 import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS, OKLCH_VIBRANT } from "./oklch";
-import { _TXT, $SKYBACK_GRAD, SPP_MENUfont, _COLS, TXTcol_MAIN, SPP_ITALfont } from "./ui.consts";
+import { _TXT, $SKYBACK_GRAD, SPP_MENUfont, _COLS, TXTcol_MAIN, SPP_ITALfont, colTXT_BYLINE } from "./ui.consts";
 import { set_alpha } from "../../ui/colors/color-helpers";
 
 
@@ -88,7 +88,7 @@ export const cssGILT_TEXT: CssMap = {
     0 0 8px rgba(232, 211, 126, 0.38),
     0 8px 22px rgba(0, 0, 0, 0.22)
   `,
-    
+
 };
 
 export const cssPRAIRIE_MASK: CssMap = {
@@ -161,7 +161,7 @@ export const cssPANEL: CssMap = {
 export const cssMENU_BOX: CssMap = {
   display: "flex",
   alignItems: "baseline",
-  justifySelf :"center",
+  justifySelf: "center",
   gap: "1.6rem",
   width: "fit-content",
 };
@@ -210,9 +210,10 @@ export const cssMENU_BTN_TXT: CssMap = {
   cursor: "pointer",
   alignSelf: "center",
   ...cssGILT_TEXT,
-    display: "inline-block",
+  display: "inline-block",
   lineHeight: "1",
   position: "relative",
+  visibility: "hidden",
   _hover: {
     borderTop: "2px solid " + OKLCH_ACID_WASHED.straw,
     borderBottom: "2px solid " + OKLCH_ACID_WASHED.straw,
@@ -222,13 +223,49 @@ export const cssMENU_BTN_TXT: CssMap = {
 export const cssHSON_BYLINE: CssMap = {
   position: "fixed",
   bottom: "1rem",
-  right: "1rem",
+  right: "5rem",
   display: "flex",
   alignSelf: "end",
   marginLeft: "6rem",
   fontSize: _TXT.smol,
   fontFamily: SPP_MENUfont,
   letterSpacing: "2px",
-  opacity: "0.4",
+  opacity: "1",
   fontStyle: "italic",
+  color: colTXT_BYLINE,
+};
+
+export const cssVINES = {
+  position: "absolute",
+  inset: "0",
+  // CHANGED: make the ornament host full-screen. The generator now handles
+  // right/center/left curtain placement internally, while the top canopy can
+  // cover the full side to avoid responsive bare patches.
+  width: "100%",
+  height: "100%",
+  pointerEvents: "none",
+  zIndex: "7",
+  overflow: "visible",
+};
+
+export const cssBLURB_PANEL: CssMap = {
+  ...cssGILT_TEXT,
+  fontWeight: "100",
+  position: "fixed",
+  top: "10rem",
+  left: "20%",
+  display: "grid",
+  gridTemplateRows: "1fr 1fr 1fr 1fr",
+  // CHANGED: the blurb is part of the splash-state baseline. Runtime state
+  // hides it with inline display:none when the content/menu view opens.
+  visibility: "visible",
+  zIndex: "8",
+  pointerEvents: "none",
+  lineHeight: "1.45",
+  letterSpacing: "2px",
+  fontFamily: SPP_MENUfont,
+  fontSize: _TXT.main,
+  color: OKLCH_ACID_WASHED.straw,
+  textAlign: "left",
+  
 };

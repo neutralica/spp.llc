@@ -2,7 +2,7 @@
 
 import { LiveTree } from "hson-live";
 import { prairie_factory } from "./prairie.js";
-import { cssHSON_BYLINE, cssLINK_BOX, cssLOGO_MAIN, cssMENU_BOX, cssMENU_BTN_TXT, cssPAGE_HOST, cssPANEL, cssPRAIRIE_HOST, cssPRAIRIE_MASK, cssSTAGE_PRAIRIE } from "../../core/consts/main.css.js";
+import { cssBLURB_PANEL, cssHSON_BYLINE, cssLINK_BOX, cssLOGO_MAIN, cssMENU_BOX, cssMENU_BTN_TXT, cssPAGE_HOST, cssPANEL, cssPRAIRIE_HOST, cssPRAIRIE_MASK, cssSTAGE_PRAIRIE, cssVINES } from "../../core/consts/main.css.js";
 import { keys_of } from "../../utils/helpers.js";
 import { relay, type OutcomeAsync } from "intrastructure";
 import { _content } from "../content/lorem-ipsum.js";
@@ -13,18 +13,16 @@ import { make_frame } from "../../ui/creation/make-frame.js";
 import { mk_div_id, mk_section_cls, mk_section_id } from "../../utils/makers.js";
 import { CONTENT_READINGcss, CONTENT_HEADcss, CONTENT_BODYcss, MENU_OVER_WASHcss, LOGO_OVER_WASHcss, MENU_BTN_OVER_WASHcss, CONTENT_WASH_OPENcss, CONTENT_WASHcss } from "./menu-css.js";
 import { make_vines } from "../../ui/vines.js";
+import type { MenuOpts } from "../../core/types/core.types.js";
 
 
-export type MenuOpts = "shop" | "terroir" | "tour" | "about";
 type PrairieContentView = Readonly<{
   tree: LiveTree;
   setContent(head: string, body: string): void;
   fadeOutPrairie(): void;
   restorePrairie(): void;
-  bindMenu(menuPanel: LiveTree, logo: LiveTree, btns: Record<MenuOpts, LiveTree>): void;
+  bindChrome(menuPanel: LiveTree, logo: LiveTree, blurbPanel: LiveTree, btns: Record<MenuOpts, LiveTree>): void;
 }>;
-
-export const MENU_OPTS: Record<MenuOpts, MenuOpts> = { shop: "shop", terroir: "terroir", tour: "tour", about: "about" };
 
 /* _create pkg objects */
 const prairieMaskPkg: CreatePkg = { el: "div", id: "prairie-mask", css: cssPRAIRIE_MASK };
@@ -37,24 +35,9 @@ const sppLogoPkg: CreatePkg = { el: "div", id: "spp-logo", txt: "spp.", css: css
 const linkBoxPkg: CreatePkg = { id: "link-box", el: "span", css: cssLINK_BOX }
 const hsonTxtPkg: CreatePkg = { el: "div", id: "hson-byline", txt: "~ made in hson-live ~", css: cssHSON_BYLINE }
 const buttonPkg: CreatePkg = { el: "span", cls: "menu-link", css: cssMENU_BTN_TXT };
+const blurbPkg: CreatePkg = { el: "div", id: "blurb-pkg", css: cssBLURB_PANEL };
 
-const vineCurtainHostPkg: CreatePkg = {
-  el: "div",
-  id: "vine-curtain-host",
-  css: {
-    position: "absolute",
-    top: "0",
-    right: "-0.75rem",
-    // CHANGED: fixed SVG viewport dimensions keep the procedural vine geometry
-    // from stretching/skewing as the browser width changes. The host stays
-    // anchored to the right edge and clips through the page host instead.
-    width: "620px",
-    height: "720px",
-    pointerEvents: "none",
-    zIndex: "7",
-    overflow: "visible",
-  },
-};
+const vineCurtainHostPkg: CreatePkg = {el: "div",  id: "vine-curtain-host",  css: cssVINES,};
 
 function eventPathHasClass(ev: PointerEvent, className: string): boolean {
   return ev.composedPath().some((node) => {
@@ -82,7 +65,7 @@ function isViewportCornerHit(ev: PointerEvent): boolean {
 }
 
 function makePrairieContentView(host: LiveTree): PrairieContentView {
-  const wash = mk_section_cls(host, "prairie content-wash").css.setMany(CONTENT_WASHcss);
+  const wash = mk_section_cls(host, "prairie content-box").css.setMany(CONTENT_WASHcss);
   const reading = mk_section_id(wash, "prairie-content-reading").css.setMany(CONTENT_READINGcss);
 
   const head = mk_div_id(reading, "prairie-content-head")
@@ -96,24 +79,34 @@ function makePrairieContentView(host: LiveTree): PrairieContentView {
   let menu: LiveTree | undefined;
   let logo: LiveTree | undefined;
   let btns: Record<MenuOpts, LiveTree> | undefined;
+  let blurb: LiveTree | undefined;
 
   const setMenuContentMode = (on: boolean): void => {
-    if (!menu || !logo || !btns) return;
+    if (!menu || !logo || !blurb || !btns) return;
 
     if (on) {
       menu.style.setMany(MENU_OVER_WASHcss);
       logo.style.setMany(LOGO_OVER_WASHcss);
+      blurb.style.set.display("none");
+
       for (const b of keys_of(btns)) {
         btns[b].style.setMany(MENU_BTN_OVER_WASHcss);
+        btns[b].style.set.visibility("visible");
       }
       return;
     }
 
-    menu.css.setMany(cssPANEL);
+    // CHANGED: splash state is now centralized here. The menu buttons are hidden
+    // anywhere the prairie view is restored, and the intro blurb returns.
+    menu.style.clear();
     logo.css.setMany(cssLOGO_MAIN);
     logo.style.clear();
+    blurb.style.clear();
+    blurb.style.set.display("grid");
+
     for (const b of keys_of(btns)) {
       btns[b].style.clear();
+      btns[b].style.set.visibility("hidden");
     }
   };
 
@@ -135,10 +128,12 @@ function makePrairieContentView(host: LiveTree): PrairieContentView {
       setMenuContentMode(false);
     },
 
-    bindMenu(menuPanelTree: LiveTree, logoTree: LiveTree, btnTrees: Record<MenuOpts, LiveTree>): void {
+    bindChrome(menuPanelTree: LiveTree, logoTree: LiveTree, blurbPanelTree: LiveTree, btnTrees: Record<MenuOpts, LiveTree>): void {
       menu = menuPanelTree;
       logo = logoTree;
+      blurb = blurbPanelTree;
       btns = btnTrees;
+      setMenuContentMode(false);
     },
   };
 }
@@ -160,23 +155,47 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   const menuPanel = _create_pkg(pageHost, menuPanelPkg);
   const menuBox = _create_pkg(menuPanel, menuBoxPkg);
   const logo = _create_pkg(menuBox, sppLogoPkg);
+  const blurbPanel = _create_pkg(menuBox, blurbPkg);
+  blurbPanel.create.div().text.set("Seasonal local botanicals");
+  blurbPanel.create.div().text.set("St. Paul, MN");
+
 
   /* social & content containers */
   const contentView = makePrairieContentView(pageHost);
-  pageHost.append(contentView.tree);
+  // CHANGED: makePrairieContentView already creates/appends its root under
+  // pageHost via mk_section_cls(host, ...). Appending it again duplicates the
+  // same LiveTree/quid-backed content box in the DOM.
   pageHost.append(makeSocialBox());
   const vineCurtainHost = _create_pkg(pageHost, vineCurtainHostPkg);
   const vines = make_vines(vineCurtainHost, {
     seed: Math.random() * 10_000,
     count: 16,
     side: "top",
-    width: 620,
-    height: 720,
+    // CHANGED: let `make_vines` measure/use the full viewport host dimensions.
+    // Do not pass fixed width/height here; the generator needs the full SVG span
+    // so canopy fill and right-aligned curtain placement can separate correctly.
+    curtainAlign: "right",
+    curtainWidthRatio: 0.42,
+    sproutOverhangRatio: 0.5,
   });
   vines.hide();
+
   const restorePrairieView = (): void => {
+    // CHANGED: one restore endpoint for corner clicks and menu toggles.
     contentView.restorePrairie();
+    vines.hide();
     view = null;
+  };
+
+  const openContentView = (nextView: MenuOpts): void => {
+    // CHANGED: one open endpoint for page clicks and menu clicks. Button clicks
+    // add content before calling this; page clicks only open the wash/chrome.
+    if (_content[nextView]) {
+      contentView.setContent(_content[nextView].head, _content[nextView].txt);
+      view = nextView;
+    }
+    vines.show();
+    contentView.fadeOutPrairie();
   };
 
   stage.listen.onPointerDown((ev) => {
@@ -184,9 +203,9 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
 
     if (isViewportCornerHit(ev)) {
       restorePrairieView();
-      vines.hide();
       return;
     }
+
     vines.show();
     contentView.fadeOutPrairie();
   });
@@ -196,27 +215,22 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   _create_pkg(stage, hsonTxtPkg);
 
   const btns: Record<MenuOpts, LiveTree> = {
-    shop: _create_pkg(linkBox, buttonPkg).text.set("shop"),
     about: _create_pkg(linkBox, buttonPkg).text.set("about"),
+    shop: _create_pkg(linkBox, buttonPkg).text.set("shop"),
     tour: _create_pkg(linkBox, buttonPkg).text.set("tour"),
-    terroir: _create_pkg(linkBox, buttonPkg).text.set("terroir"),
+    friends: _create_pkg(linkBox, buttonPkg).text.set("friends"),
   };
 
-  contentView.bindMenu(menuPanel, logo, btns);
+  contentView.bindChrome(menuPanel, logo, blurbPanel, btns);
 
   keys_of(btns).forEach(b => {
     btns[b].listen.onPointerDown((ev) => {
       ev.stopPropagation();
 
       if (view !== b) {
-        contentView.setContent(_content[b].head, _content[b].txt);
-        contentView.fadeOutPrairie();
-        vines.show();
-        view = b;
+        openContentView(b);
       } else {
-        contentView.restorePrairie();
-        vines.hide();
-        view = null;
+        restorePrairieView();
       }
     })
   });

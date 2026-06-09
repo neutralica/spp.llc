@@ -16,6 +16,11 @@ export type VineLayerConfig = Readonly<{
   height: number;
   count: number;
   side: VineSide;
+  curtainAlign: "left" | "center" | "right";
+  curtainWidthRatio: number;
+  sproutOverhangRatio: number;
+  canvasMinWidth: number;
+  canvasMinHeight: number;
   minLength: number;
   maxLength: number;
   minAmp: number;
@@ -76,6 +81,11 @@ export const DEFAULT_VINE_LAYER: VineLayerConfig = {
   height: 520,
   count: 7,
   side: "top",
+  curtainAlign: "right",
+  curtainWidthRatio: 0.42,
+  sproutOverhangRatio: 0.6,
+  canvasMinWidth: 1600,
+  canvasMinHeight: 720,
   minLength: 190,
   maxLength: 470,
   minAmp: 5,
@@ -188,6 +198,52 @@ function pick(rand: () => number, min: number, max: number): number {
 
 function maybe(rand: () => number, chance: number): boolean {
   return rand() <= clamp01(chance);
+}
+
+function clampRange(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+function viewportSize(): Readonly<{ width: number; height: number }> {
+  // CHANGED: the full-screen vine host can report a zero/unstable client size
+  // while it is being mounted. Use the viewport as the reliable fallback so the
+  // canopy actually fills the screen-width SVG instead of stretching a 420px
+  // default viewBox across the page.
+  if (typeof window === "undefined") return { width: DEFAULT_VINE_LAYER.width, height: DEFAULT_VINE_LAYER.height };
+  return {
+    width: Math.max(1, Math.round(window.innerWidth)),
+    height: Math.max(1, Math.round(window.innerHeight)),
+  };
+}
+function curtainSpan(cfg: VineLayerConfig): Readonly<{ start: number; size: number }> {
+  const spread = cfg.side === "top" || cfg.side === "bottom" ? cfg.width : cfg.height;
+  const size = clampRange(spread * cfg.curtainWidthRatio, 1, spread);
+  const start = cfg.curtainAlign === "right"
+    ? spread - size
+    : cfg.curtainAlign === "center"
+      ? (spread - size) * 0.5
+      : 0;
+
+  return { start, size };
+}
+
+function expandedCurtainConfig(cfg: VineLayerConfig, overhangRatio: number): VineLayerConfig {
+  const clampedOverhang = clamp01(overhangRatio);
+
+  // CHANGED: keep sprout expansion deliberately conservative. The previous
+  // expansion pushed short-vine stems across too much of the full-screen SVG,
+  // creating a vertical barcode. Canopy still fills the full top edge; sprouts
+  // now only soften the transition around the main curtain.
+  const expandedRatio = clampRange(
+    cfg.curtainWidthRatio + (1 - cfg.curtainWidthRatio) * clampedOverhang * 0.42,
+    cfg.curtainWidthRatio,
+    1,
+  );
+
+  return {
+    ...cfg,
+    curtainWidthRatio: expandedRatio,
+  };
 }
 
 function svgNum(n: number): string {
@@ -520,8 +576,9 @@ function makeVineSpec(cfg: VineLayerConfig, rand: () => number, index: number): 
   const depth = cfg.count <= 1 ? 1 : index / (cfg.count - 1);
   const front = depth > 0.52;
   const spread = cfg.side === "top" || cfg.side === "bottom" ? cfg.width : cfg.height;
-  const lane = spread * ((index + 0.5) / Math.max(1, cfg.count));
-  const laneJitter = pick(rand, -spread * 0.075, spread * 0.075);
+  const span = curtainSpan(cfg);
+  const lane = span.start + span.size * ((index + 0.5) / Math.max(1, cfg.count));
+  const laneJitter = pick(rand, -span.size * 0.075, span.size * 0.075);
   const offset = lane + laneJitter;
 
   let start: Point;
@@ -580,7 +637,9 @@ function createSvg(width: number, height: number): SvgLiveTree {
       width: String(width),
       height: String(height),
       viewBox: `0 0 ${width} ${height}`,
-      preserveAspectRatio: "none",
+      // CHANGED: keep the ornament geometry proportional and crop it like a
+      // right-anchored scenic backdrop instead of stretching the vines.
+      preserveAspectRatio: "xMaxYMin slice",
     });
 }
 
@@ -630,11 +689,20 @@ function renderTaperedBranch(svg: SvgLiveTree, parent: VineSpec, branch: VineBra
 
 export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {}): VineRuntime {
   const size = host.dom.clientSize();
-  const cfg: VineLayerConfig = {
+  const fallbackSize = viewportSize();
+  const hostWidth = size?.width && size.width > 8 ? size.width : fallbackSize.width;
+  const hostHeight = size?.height && size.height > 8 ? size.height : fallbackSize.height;
+  const baseCfg: VineLayerConfig = {
     ...DEFAULT_VINE_LAYER,
-    width: Math.max(1, Math.round(options.width ?? size?.width ?? DEFAULT_VINE_LAYER.width)),
-    height: Math.max(1, Math.round(options.height ?? size?.height ?? DEFAULT_VINE_LAYER.height)),
     ...options,
+  };
+  const cfg: VineLayerConfig = {
+    ...baseCfg,
+    // CHANGED: draw on a stable oversize canvas and let the SVG crop from the
+    // left/bottom as needed. This avoids resize distortion while preserving the
+    // right/top curtain anchor.
+    width: Math.max(baseCfg.canvasMinWidth, Math.round(options.width ?? hostWidth)),
+    height: Math.max(baseCfg.canvasMinHeight, Math.round(options.height ?? hostHeight)),
   };
 
   const rand = make_rng(cfg.seed);
@@ -787,18 +855,23 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
     renderTaperedVine(svg, spec, bareCfg);
   }
 
+  const sproutSpanCfg = expandedCurtainConfig(cfg, cfg.sproutOverhangRatio);
   const sproutCount = Math.max(0, Math.round(cfg.topSproutCount));
   const sproutCfg: VineLayerConfig = {
     ...cfg,
+    curtainAlign: sproutSpanCfg.curtainAlign,
+    curtainWidthRatio: sproutSpanCfg.curtainWidthRatio,
     count: sproutCount,
-    minLength: Math.min(cfg.minLength * 0.28, cfg.height * cfg.topSproutMaxRatio * 0.28),
-    maxLength: Math.min(cfg.maxLength * 0.38, cfg.height * cfg.topSproutMaxRatio * 0.74),
-    minAmp: cfg.minAmp * 0.84,
-    maxAmp: cfg.maxAmp * 1.18,
+    // CHANGED: sprouts should read as short top growth, not another full-height
+    // curtain. Keep them materially shorter now that the SVG host is full-screen.
+    minLength: Math.min(cfg.minLength * 0.18, cfg.height * cfg.topSproutMaxRatio * 0.12),
+    maxLength: Math.min(cfg.maxLength * 0.26, cfg.height * cfg.topSproutMaxRatio * 0.32),
+    minAmp: cfg.minAmp * 0.62,
+    maxAmp: cfg.maxAmp * 0.78,
     strokeMin: cfg.strokeMin * 0.58,
     strokeMax: cfg.strokeMax * 0.72,
-    opacityBack: cfg.opacityBack * 0.58,
-    opacityFront: cfg.opacityFront * 0.68,
+    opacityBack: cfg.opacityBack * 0.42,
+    opacityFront: cfg.opacityFront * 0.52,
     branchChance: cfg.branchChance * 0.55,
     leaflessVineChance: 0.04,
     bareVineCount: 0,
