@@ -1,6 +1,6 @@
 import type { CssMap } from "hson-live/types";
 import { cssLOGO_BASE_TEXT, cssLOGO_MAIN } from "../../core/consts/main.css";
-import { OKLCH_FOREST, OKLCH_NEUTRALS, OKLCH_ACID_WASHED } from "../../core/consts/oklch";
+import { OKLCH_FOREST, OKLCH_NEUTRALS, OKLCH_ACID_WASHED, OKLCH_VIBRANT } from "../../core/consts/oklch";
 import { SPP_MENUfont } from "../../core/consts/ui.consts";
 import { set_alpha } from "../../ui/colors/color-helpers";
 
@@ -43,9 +43,9 @@ export const LOGO_OVER_WASHcss: CssMap = {
   background: "none",
   backgroundImage: "none",
   textShadow: `
-  0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 1)},
-  0 -1px 0 ${set_alpha(OKLCH_ACID_WASHED.straw, 1)}
-`
+  -1px -1px 0.5px ${OKLCH_VIBRANT.yellowCanary},
+  1px 1px 1px ${OKLCH_VIBRANT.plumBruised}
+  `
 };
 export const MENU_BTN_OVER_WASHcss: CssMap = {
   position: "relative",
@@ -53,31 +53,10 @@ export const MENU_BTN_OVER_WASHcss: CssMap = {
   color: OKLCH_FOREST.laurelShadow,
   // CHANGED: keep button text behavior aligned with the logo if inherited
   // text-fill effects are present.
-  textShadow: `0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.42)}`,
-};
-export const LOGO_SHADOW_HOSTcss: CssMap = {
-  gridColumn: "1",
-  gridRow: "1",
-  display: "grid",
-  position: "relative",
-  width: "fit-content",
-  justifySelf: "center",
-  alignSelf: "center",
-  pointerEvents: "none",
-  zIndex: "7",
-  visibility: "hidden",
+  // textShadow: `0 1px 0 ${set_alpha(OKLCH_NEUTRALS.paper, 0.42)}`,
 };
 
 
-
-export const LOGO_ECHO_ECHOcss: CssMap = {
-  ...cssLOGO_BASE_TEXT,
-  top: "auto",
-  left: "auto",
-  // alignSelf: "center",
-  color: OKLCH_FOREST.bottleGlass,
-  opacity: "1",
-};
 export const CONTENT_WASHcss: CssMap = {
   position: "absolute",
   inset: "0",
@@ -87,9 +66,9 @@ export const CONTENT_WASHcss: CssMap = {
   transition: "opacity 420ms ease",
   color: OKLCH_FOREST.laurelShadow,
   background: `
-  radial-gradient(circle at 18% 20%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.38)}, transparent 34%),
-  radial-gradient(circle at 82% 12%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.28)}, transparent 28%),
-  linear-gradient(180deg, ${set_alpha(OKLCH_NEUTRALS.paper, 0.62)}, ${set_alpha(OKLCH_NEUTRALS.paper, 0.50)})
+  radial-gradient(circle at 18% 20%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.68)}, transparent 34%),
+  radial-gradient(circle at 82% 12%, ${set_alpha(OKLCH_NEUTRALS.paper, 0.58)}, transparent 28%),
+  linear-gradient(180deg, ${set_alpha(OKLCH_NEUTRALS.paper, 0.82)}, ${set_alpha(OKLCH_NEUTRALS.paper, 0.50)})
 `,
   boxShadow: `
   inset 0 0 2.5rem ${set_alpha(OKLCH_FOREST.deepMossBlack, 0.20)},

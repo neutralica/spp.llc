@@ -10,8 +10,8 @@ import { makeSocialBox } from "../../ui/creation/make-social.js";
 import { set_global_css } from "./global-css.js";
 import { _create_pkg, type CreatePkg } from "./pkg.js";
 import { make_frame } from "../../ui/creation/make-frame.js";
-import { mk_div_id, mk_section_id } from "../../utils/makers.js";
-import { CONTENT_READINGcss, CONTENT_HEADcss, CONTENT_BODYcss, MENU_OVER_WASHcss, LOGO_OVER_WASHcss, MENU_BTN_OVER_WASHcss, CONTENT_WASH_OPENcss, LOGO_SHADOW_HOSTcss, LOGO_ECHO_ECHOcss, CONTENT_WASHcss } from "./menu-css.js";
+import { mk_div_id, mk_section_cls, mk_section_id } from "../../utils/makers.js";
+import { CONTENT_READINGcss, CONTENT_HEADcss, CONTENT_BODYcss, MENU_OVER_WASHcss, LOGO_OVER_WASHcss, MENU_BTN_OVER_WASHcss, CONTENT_WASH_OPENcss, CONTENT_WASHcss } from "./menu-css.js";
 import { make_vines } from "../../ui/vines.js";
 
 
@@ -33,11 +33,28 @@ const pgHost: CreatePkg = { el: "div", id: "page-host", css: cssPAGE_HOST };
 const menuPanelPkg: CreatePkg = { el: "div", id: "menu-panel", css: cssPANEL }
 const menuBoxPkg: CreatePkg = { el: "div", id: "menu-box", css: cssMENU_BOX };
 const sppLogoPkg: CreatePkg = { el: "div", id: "spp-logo", txt: "spp.", css: cssLOGO_MAIN };
-const shadowLogoPkg: CreatePkg = { el: "div", id: "spp-logo", txt: "spp.", css: LOGO_ECHO_ECHOcss };
 
 const linkBoxPkg: CreatePkg = { id: "link-box", el: "span", css: cssLINK_BOX }
 const hsonTxtPkg: CreatePkg = { el: "div", id: "hson-byline", txt: "~ made in hson-live ~", css: cssHSON_BYLINE }
 const buttonPkg: CreatePkg = { el: "span", cls: "menu-link", css: cssMENU_BTN_TXT };
+
+const vineCurtainHostPkg: CreatePkg = {
+  el: "div",
+  id: "vine-curtain-host",
+  css: {
+    position: "absolute",
+    top: "0",
+    right: "-0.75rem",
+    // CHANGED: fixed SVG viewport dimensions keep the procedural vine geometry
+    // from stretching/skewing as the browser width changes. The host stays
+    // anchored to the right edge and clips through the page host instead.
+    width: "620px",
+    height: "720px",
+    pointerEvents: "none",
+    zIndex: "7",
+    overflow: "visible",
+  },
+};
 
 function eventPathHasClass(ev: PointerEvent, className: string): boolean {
   return ev.composedPath().some((node) => {
@@ -65,7 +82,7 @@ function isViewportCornerHit(ev: PointerEvent): boolean {
 }
 
 function makePrairieContentView(host: LiveTree): PrairieContentView {
-  const wash = mk_section_id(host, "prairie-content-wash").css.setMany(CONTENT_WASHcss);
+  const wash = mk_section_cls(host, "prairie content-wash").css.setMany(CONTENT_WASHcss);
   const reading = mk_section_id(wash, "prairie-content-reading").css.setMany(CONTENT_READINGcss);
 
   const head = mk_div_id(reading, "prairie-content-head")
@@ -84,7 +101,7 @@ function makePrairieContentView(host: LiveTree): PrairieContentView {
     if (!menu || !logo || !btns) return;
 
     if (on) {
-      menu.css.setMany(MENU_OVER_WASHcss);
+      menu.style.setMany(MENU_OVER_WASHcss);
       logo.style.setMany(LOGO_OVER_WASHcss);
       for (const b of keys_of(btns)) {
         btns[b].style.setMany(MENU_BTN_OVER_WASHcss);
@@ -143,18 +160,20 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
   const menuPanel = _create_pkg(pageHost, menuPanelPkg);
   const menuBox = _create_pkg(menuPanel, menuBoxPkg);
   const logo = _create_pkg(menuBox, sppLogoPkg);
-  const vines = make_vines(menuBox, {
-    seed: Math.random() * 10_000,
-    count:16,
-    side: "top",
-    width: 420,
-    height: 520,
-  })
-    vines.hide();
+
   /* social & content containers */
   const contentView = makePrairieContentView(pageHost);
   pageHost.append(contentView.tree);
   pageHost.append(makeSocialBox());
+  const vineCurtainHost = _create_pkg(pageHost, vineCurtainHostPkg);
+  const vines = make_vines(vineCurtainHost, {
+    seed: Math.random() * 10_000,
+    count: 16,
+    side: "top",
+    width: 620,
+    height: 720,
+  });
+  vines.hide();
   const restorePrairieView = (): void => {
     contentView.restorePrairie();
     view = null;
@@ -168,8 +187,8 @@ export async function mount_prairie(stage: LiveTree): OutcomeAsync<void> {
       vines.hide();
       return;
     }
-    contentView.fadeOutPrairie();
     vines.show();
+    contentView.fadeOutPrairie();
   });
 
   /* menu buttons */

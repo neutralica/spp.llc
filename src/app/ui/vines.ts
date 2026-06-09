@@ -4,6 +4,7 @@
 import { hson, type LiveTree } from "hson-live";
 import type { CssMap, SvgLiveTree } from "hson-live/types";
 import { make_rng } from "../utils/rng.js";
+import { OKLCH_FOREST } from "../core/consts/oklch.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -78,46 +79,46 @@ export const DEFAULT_VINE_LAYER: VineLayerConfig = {
   minLength: 190,
   maxLength: 470,
   minAmp: 5,
-  maxAmp: 20,
-  lengthAmpEase: 0.54,
+  maxAmp: 11,
+  lengthAmpEase: 0.34,
   nodeMinGap: 78,
   nodeMaxGap: 132,
   nodeJitter: 0.035,
   baseTuftChance: 0.72,
-  leafPairChance: 0.08,
-  leaflessVineChance: 0.18,
-  bareVineCount: 5,
-  leafCadenceMin: 14,
-  leafCadenceMax: 26,
-  tendrilTurnsMin: 2.6,
-  tendrilTurnsMax: 4.35,
+  leafPairChance: 0.16,
+  leaflessVineChance: 0.38,
+  bareVineCount: 15,
+  leafCadenceMin: 10,
+  leafCadenceMax: 15,
+  tendrilTurnsMin: 3.6,
+  tendrilTurnsMax: 6.35,
   branchChance: 0.22,
   branchMinLength: 54,
   branchMaxLength: 142,
   branchMinAngle: 0.14,
   branchMaxAngle: 0.42,
   branchStrokeScale: 0.58,
-  branchOpacityScale: 0.72,
+  branchOpacityScale: 1,
   minStep: 38,
   maxStep: 76,
-  strokeMin: 0.7,
-  strokeMax: 1.75,
+  strokeMin: 0.5,
+  strokeMax: 1.25,
   opacityBack: 0.16,
-  opacityFront: 0.42,
-  colorBack: "oklch(20% 0.035 145)",
-  colorFront: "oklch(34% 0.065 145)",
+  opacityFront: 0.32,
+  colorBack: OKLCH_FOREST.wetFern,
+  colorFront: OKLCH_FOREST.oldHedge,
   leafChance: 0.94,
-  curlChance: 0.14,
-  tendrilChance: 0.18,
+  curlChance: 0.94,
+  tendrilChance: 0.58,
   leafMin: 4,
   leafMax: 11,
   curlMin: 6,
-  curlMax: 18,
-  taperEndScale: 0.48,
-  topSproutCount: 18,
-  topSproutMaxRatio: 0.4,
-  topCanopyLeafCount: 128,
-  topCanopyDepthRatio: 0.18,
+  curlMax: 12,
+  taperEndScale: 0.38,
+  topSproutCount: 20,
+  topSproutMaxRatio: 0.9,
+  topCanopyLeafCount: 528,
+  topCanopyDepthRatio: 0.1,
 };
 
 export const VINE_LAYERcss: CssMap = {
@@ -127,6 +128,7 @@ export const VINE_LAYERcss: CssMap = {
   height: "100%",
   pointerEvents: "none",
   overflow: "visible",
+  // transition: "visibility 3000ms ease-in"
 };
 
 type Point = Readonly<{ x: number; y: number }>;
@@ -263,21 +265,26 @@ function branchSegmentPath(parent: VineSpec, branch: VineBranch, t0: number, t1:
 }
 
 
-function leafPath(x: number, y: number, r: number, angle: number, flip: 1 | -1): string {
+function leafPath(x: number, y: number, r: number, angle: number, flip: 1 | -1, shape = 0): string {
   const ca = Math.cos(angle);
   const sa = Math.sin(angle);
+  const narrow = 1 + shape * 0.18;
+  const long = 1 - shape * 0.14;
+  const curl = shape * 0.16;
 
   const tx = (dx: number, dy: number): Point => ({
     x: x + dx * ca - dy * sa,
     y: y + dx * sa + dy * ca,
   });
 
+  // CHANGED: small per-leaf shape variation keeps the repeated leaf glyph from
+  // looking stamped. The defaults still preserve the same basic heart/ivy form.
   const p0 = tx(0, 0);
-  const p1 = tx(flip * r * 0.72, -r * 0.44);
-  const p2 = tx(flip * r * 1.16, r * 0.18);
-  const p3 = tx(flip * r * 0.28, r * 0.92);
-  const p4 = tx(flip * -r * 0.42, r * 0.42);
-  const p5 = tx(flip * -r * 0.24, -r * 0.18);
+  const p1 = tx(flip * r * (0.72 * narrow), -r * (0.44 + curl));
+  const p2 = tx(flip * r * (1.16 + curl), r * (0.18 * long));
+  const p3 = tx(flip * r * (0.28 * narrow), r * (0.92 * long));
+  const p4 = tx(flip * -r * (0.42 - curl), r * (0.42 * long));
+  const p5 = tx(flip * -r * (0.24 * narrow), -r * (0.18 + curl * 0.5));
 
   return [
     `M ${svgNum(p0.x)} ${svgNum(p0.y)}`,
@@ -359,60 +366,41 @@ function vineNodeList(cfg: VineLayerConfig, rand: () => number, length: number):
 }
 function alternatingLeafSites(sites: readonly VineSite[]): readonly VineSite[] {
   const sorted = [...sites].sort((a, b) => a.t - b.t);
-  const first = sorted[0];
-  if (!first) return sorted;
-
-  let side = first.side;
 
   return sorted.map((site, index) => {
-    // CHANGED: alternate side every leaf, but use a four-step rotation phase so
-    // leaf shape orientation does not stay locked to vine side.
-    const rotate: 1 | -1 = index % 4 === 0 || index % 4 === 3 ? 1 : -1;
-    const next: VineSite = { ...site, side, rotate };
-    side = side === 1 ? -1 : 1;
-    return next;
+    // CHANGED: force each vine's visible leaf sequence into a simple footstep
+    // pattern. `side` and `rotate` now stay coupled per leaf, rather than using
+    // an independent rotation phase that can look like per-vine variation.
+    const side: 1 | -1 = index % 2 === 0 ? 1 : -1;
+    return { ...site, side, rotate: side };
   });
 }
 
-function vineLeafSites(cfg: VineLayerConfig, rand: () => number, length: number, nodes: readonly VineNode[]): readonly VineSite[] {
+function vineLeafSites(cfg: VineLayerConfig, rand: () => number, length: number, _nodes: readonly VineNode[]): readonly VineSite[] {
   const sites: VineSite[] = [];
   let y = pick(rand, cfg.leafCadenceMin * 0.4, cfg.leafCadenceMax);
   let side: 1 | -1 = rand() > 0.5 ? 1 : -1;
 
   while (y < length * 0.9) {
-    const t = clamp01((y / length) + pick(rand, -0.015, 0.015));
-    // CHANGED: leaves now keep a clearer left-right march down the vine,
-    // with scale fading gradually toward the tip.
-    const scale = lerp(1.0, 0.54, t) * pick(rand, 0.88, 1.1);
-    sites.push({ t, side, rotate: 1, scale });
+    const t = clamp01((y / length) + pick(rand, -0.01, 0.01));
+    // CHANGED: one leaf system only. Leaves come from a regular cadence, not
+    // from ornament nodes. Size stays mature through the upper half of the vine,
+    // then tapers toward the bottom with only small natural dither.
+    const maturityFade = clamp01((t - 0.5) / 0.4);
+    const scale = lerp(1.0, 0.58, maturityFade) * pick(rand, 0.92, 1.06);
+    sites.push({ t, side, rotate: side, scale });
 
     if (maybe(rand, cfg.leafPairChance)) {
       sites.push({
-        t: clamp01(t + pick(rand, -0.014, 0.014)),
+        t: clamp01(t + pick(rand, 0.01, 0.022)),
         side: side === 1 ? -1 : 1,
-        rotate: -1,
-        scale: scale * pick(rand, 0.68, 0.88),
+        rotate: side === 1 ? -1 : 1,
+        scale: scale * pick(rand, 0.82, 0.94),
       });
     }
 
     side = side === 1 ? -1 : 1;
     y += pick(rand, cfg.leafCadenceMin, cfg.leafCadenceMax);
-  }
-
-  for (const node of nodes) {
-    const nearest = sites.reduce<VineSite | undefined>((best, site) => {
-      if (!best) return site;
-      return Math.abs(site.t - node.t) < Math.abs(best.t - node.t) ? site : best;
-    }, undefined);
-
-    // CHANGED: ornament nodes should reinforce the footstep cadence instead of
-    // throwing extra same-side clusters over the regular leaf march.
-    sites.push({
-      t: node.t,
-      side: nearest ? (nearest.side === 1 ? -1 : 1) : node.side,
-      rotate: -1,
-      scale: lerp(0.92, 0.52, node.t) * pick(rand, 0.78, 0.98),
-    });
   }
 
   return alternatingLeafSites(sites);
@@ -448,16 +436,20 @@ function orientAngle(spec: VineSpec, t: number, branchSide: 1 | -1): number {
   return tangentAngle(spec, t) + branchSide * Math.PI * 0.5;
 }
 
-function leafStemAngle(spec: VineSpec, t: number, side: 1 | -1, rotate: 1 | -1): number {
-  const normal = orientAngle(spec, t, side);
-  // CHANGED: `side` decides which side of the vine gets the leaf. `rotate`
-  // now creates a visible independent tilt phase, rather than mirroring in
-  // lockstep with the side value.
-  return normal + rotate * 0.72 + Math.sin(t * Math.PI * 11) * 0.06;
+function leafStemAngle(spec: VineSpec, t: number, side: 1 | -1, _rotate: 1 | -1): number {
+  const tangent = tangentAngle(spec, t);
+  // CHANGED: rotate the leaf system with the vine's local slope. `leafPath`'s
+  // local +Y axis points downward when angle is 0, so subtract 90deg from the
+  // vine tangent to make the leaf droop along the vine, then add a small
+  // side-dependent lean so left/right leaves still open away from the stem.
+  return tangent - Math.PI * 0.5 + side * 0.18;
 }
 
 function leafOutwardAnchor(origin: Point, stemAngle: number, side: 1 | -1, distance: number): Point {
-  return pointToward(origin, stemAngle + side * 0.22, distance);
+  // CHANGED: place the leaf on the local normal of the vine, inferred from the
+  // stem angle above. This makes side placement follow the vine's curve instead
+  // of always offsetting horizontally.
+  return pointToward(origin, stemAngle + Math.PI * 0.5 + side * Math.PI * 0.5, distance);
 }
 
 function branchOrientAngle(parent: VineSpec, branch: VineBranch, t: number, branchSide: 1 | -1): number {
@@ -467,16 +459,17 @@ function branchOrientAngle(parent: VineSpec, branch: VineBranch, t: number, bran
   return tangent + branchSide * Math.PI * 0.5;
 }
 
-function branchLeafStemAngle(parent: VineSpec, branch: VineBranch, t: number, side: 1 | -1, rotate: 1 | -1): number {
+function branchLeafStemAngle(parent: VineSpec, branch: VineBranch, t: number, side: 1 | -1, _rotate: 1 | -1): number {
   const p0 = branchPointAt(parent, branch, Math.max(0, t - 0.02));
   const p1 = branchPointAt(parent, branch, Math.min(1, t + 0.02));
   const tangent = Math.atan2(p1.y - p0.y, p1.x - p0.x);
-  const normal = tangent + side * Math.PI * 0.5;
-  return normal + rotate * 0.72 + Math.sin(t * Math.PI * 11) * 0.06;
+  // CHANGED: branch leaves now follow the branch's local slope with the same
+  // droop-plus-outward-lean rule as main-vine leaves.
+  return tangent - Math.PI * 0.5 + side * 0.18;
 }
 
 function branchLeafOutwardAnchor(origin: Point, stemAngle: number, side: 1 | -1, distance: number): Point {
-  return pointToward(origin, stemAngle + side * 0.22, distance);
+  return pointToward(origin, stemAngle + Math.PI * 0.5 + side * Math.PI * 0.5, distance);
 }
 
 function vineBranches(cfg: VineLayerConfig, rand: () => number, specLength: number, nodes: readonly VineNode[]): readonly VineBranch[] {
@@ -606,7 +599,8 @@ function renderTaperedVine(svg: SvgLiveTree, spec: VineSpec, cfg: VineLayerConfi
       fill: "none",
       stroke: spec.color,
       "stroke-width": String(spec.stroke * taper),
-      "stroke-linecap": "round",
+      // CHANGED: avoid bead-like dots at every tapered segment joint.
+      "stroke-linecap": "butt",
       "stroke-linejoin": "round",
       opacity: String(spec.opacity),
     });
@@ -626,7 +620,8 @@ function renderTaperedBranch(svg: SvgLiveTree, parent: VineSpec, branch: VineBra
       fill: "none",
       stroke: parent.color,
       "stroke-width": String(parent.stroke * branch.stroke * taper),
-      "stroke-linecap": "round",
+      // CHANGED: avoid bead-like dots at every tapered segment joint.
+      "stroke-linecap": "butt",
       "stroke-linejoin": "round",
       opacity: String(parent.opacity * branch.opacity),
     });
@@ -652,9 +647,10 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
 
     renderTaperedVine(svg, spec, cfg);
 
-    // CHANGED: keep a minority of long trailing stems nearly leafless, like the
-    // reference photos. The contrast makes the leafy vines read more clearly.
-    const specLeafChance = maybe(rand, cfg.leaflessVineChance) ? cfg.leafChance * 0.08 : cfg.leafChance;
+    // CHANGED: keep a minority of long trailing stems fully leafless. The old
+    // “nearly leafless” 8% chance created confusing sporadic leaflets that
+    // looked contrary to the regular leaf-cadence rule.
+    const specLeafChance = maybe(rand, cfg.leaflessVineChance) ? 0 : cfg.leafChance;
 
     for (const branch of spec.branches) {
       renderTaperedBranch(svg, spec, branch, cfg);
@@ -682,14 +678,19 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
       }
 
       for (const site of branch.leafSites) {
-        if (!maybe(rand, specLeafChance * 0.92) && !branch.nodes.some((node) => Math.abs(node.t - site.t) < 0.001)) continue;
+        // CHANGED: do not force leaves at ornament nodes. Leaf density is now
+        // controlled only by the regular left-right cadence, so leafless vines
+        // can remain genuinely bare.
+        if (!maybe(rand, specLeafChance * 0.92)) continue;
 
         const p = branchPointAt(spec, branch, site.t);
-        const angle = branchLeafStemAngle(spec, branch, site.t, site.side, site.rotate) + pick(rand, -0.04, 0.04);
-        const radius = pick(rand, cfg.leafMin * 0.82, cfg.leafMax * 0.96) * site.scale;
-        const leafAnchor = branchLeafOutwardAnchor(p, angle, site.side, radius * 0.68);
+        // CHANGED: per-leaf rotational dither keeps the repeated shapes from
+        // aligning too mechanically down the vine.
+        const angle = branchLeafStemAngle(spec, branch, site.t, site.side, site.rotate) + pick(rand, -Math.PI * 0.16, Math.PI * 0.16);
+        const radius = lerp(cfg.leafMax * 0.78, cfg.leafMin * 0.72, 1 - site.scale) * pick(rand, 0.92, 1.06);
+        const leafAnchor = branchLeafOutwardAnchor(p, angle, site.side, radius * 0.62);
 
-        appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1), {
+        appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1, pick(rand, -0.42, 0.42)), {
           fill: spec.color,
           opacity: String(spec.opacity * branch.opacity * pick(rand, 0.66, 1.08)),
         });
@@ -718,14 +719,14 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
           fill: "none",
           stroke: spec.color,
           "stroke-width": String(spec.stroke * 0.68),
-          "stroke-linecap": "round",
+          "stroke-linecap": "butt",
           "stroke-linejoin": "round",
           opacity: String(spec.opacity * pick(rand, 0.45, 0.8)),
         });
       }
 
       if (true) {
-        const len = pick(rand, 18, 68);
+        const len = pick(rand, 4, 8);
         const tendrilAngle = angle + pick(rand, -0.34, 0.34);
 
         appendPath(svg, tendrilPath(p, tendrilAngle, len, pick(rand, 3, 9), side), {
@@ -740,14 +741,19 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
     }
 
     for (const site of spec.leafSites) {
-      if (!maybe(rand, specLeafChance) && !spec.nodes.some((node) => Math.abs(node.t - site.t) < 0.001)) continue;
+      // CHANGED: do not force leaves at ornament nodes. Leaf density is now
+      // controlled only by the regular left-right cadence, so leafless vines
+      // can remain genuinely bare.
+      if (!maybe(rand, specLeafChance)) continue;
 
       const p = pointAt(spec, site.t);
-      const angle = leafStemAngle(spec, site.t, site.side, site.rotate) + pick(rand, -0.04, 0.04);
-      const radius = pick(rand, cfg.leafMin * 1.02, cfg.leafMax * 1.12) * site.scale;
-      const leafAnchor = leafOutwardAnchor(p, angle, site.side, radius * 0.74);
+      // CHANGED: per-leaf rotational dither keeps the repeated shapes from
+      // aligning too mechanically down the vine.
+      const angle = leafStemAngle(spec, site.t, site.side, site.rotate) + pick(rand, -Math.PI * 0.16, Math.PI * 0.16);
+      const radius = lerp(cfg.leafMax * 0.92, cfg.leafMin * 0.82, 1 - site.scale) * pick(rand, 0.92, 1.06);
+      const leafAnchor = leafOutwardAnchor(p, angle, site.side, radius * 0.68);
 
-      appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1), {
+      appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1, pick(rand, -0.42, 0.42)), {
         fill: spec.color,
         opacity: String(spec.opacity * pick(rand, 0.62, 1.08)),
       });
@@ -809,11 +815,13 @@ export function make_vines(host: LiveTree, options: Partial<VineLayerConfig> = {
       if (!maybe(rand, sproutCfg.leafChance * 0.94)) continue;
 
       const p = pointAt(spec, site.t);
-      const angle = leafStemAngle(spec, site.t, site.side, site.rotate) + pick(rand, -0.04, 0.04);
-      const radius = pick(rand, sproutCfg.leafMin, sproutCfg.leafMax) * site.scale * 0.9;
-      const leafAnchor = leafOutwardAnchor(p, angle, site.side, radius * 0.66);
+      // CHANGED: per-leaf rotational dither keeps the repeated shapes from
+      // aligning too mechanically down the vine.
+      const angle = leafStemAngle(spec, site.t, site.side, site.rotate) + pick(rand, -Math.PI * 0.16, Math.PI * 0.16);
+      const radius = lerp(sproutCfg.leafMax * 0.86, sproutCfg.leafMin * 0.78, 1 - site.scale) * pick(rand, 0.92, 1.06);
+      const leafAnchor = leafOutwardAnchor(p, angle, site.side, radius * 0.62);
 
-      appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1), {
+      appendPath(svg, leafPath(leafAnchor.x, leafAnchor.y, radius, angle, 1, pick(rand, -0.42, 0.42)), {
         fill: spec.color,
         opacity: String(spec.opacity * pick(rand, 0.5, 0.92)),
       });

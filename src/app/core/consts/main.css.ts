@@ -1,5 +1,5 @@
 import type { CssMap } from "hson-live/types";
-import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS } from "./oklch";
+import { OKLCH_ACID_WASHED, OKLCH_FLEURS, OKLCH_NEUTRALS, OKLCH_VIBRANT } from "./oklch";
 import { _TXT, $SKYBACK_GRAD, SPP_MENUfont, _COLS, TXTcol_MAIN, SPP_ITALfont } from "./ui.consts";
 import { set_alpha } from "../../ui/colors/color-helpers";
 
@@ -18,6 +18,9 @@ export const cssPAGE_HOST: CssMap = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   inset: "0",
+  // CHANGED: contain the right-side vine curtain so it cannot create a visible
+  // document margin / horizontal scroll gutter.
+  overflow: "hidden",
 };
 
 export const cssPRAIRIE_HOST: CssMap = {
@@ -30,6 +33,8 @@ export const cssPRAIRIE_HOST: CssMap = {
 
 export const cssSTAGE_PRAIRIE: CssMap = {
   position: "relative",
+  // CHANGED: keep decorative layers from forcing document overflow.
+  overflow: "hidden",
   filter: "saturate(0.92) sepia(0.10) contrast(0.96) brightness(1.04)",
   __after: {
     content: '""',
@@ -79,10 +84,11 @@ export const cssGILT_TEXT: CssMap = {
   position: "relative",
   color: "#d8c77c",
   textShadow: `
-    0 -1px 0 rgba(255, 248, 190, 0.75),
+    0 -0.015em 0 rgba(255, 248, 190, 0.75),
     0 0 8px rgba(232, 211, 126, 0.38),
     0 8px 22px rgba(0, 0, 0, 0.22)
   `,
+    
 };
 
 export const cssPRAIRIE_MASK: CssMap = {
@@ -128,7 +134,12 @@ export const cssLINK_BOX: CssMap = {
   gridColumn: "2",
   gridRow: "1",
   display: "flex",
+  alignItems: "baseline",
+  gap: "1.2rem",
+  transform: "translateY(-0.35rem)",
   justifyContent: "center",
+  height: "fit-content",
+
 }
 
 /* svg attrs & css */
@@ -148,13 +159,14 @@ export const cssPANEL: CssMap = {
 };
 
 export const cssMENU_BOX: CssMap = {
-  marginTop: "1vh",
-  marginLeft: "5rem",
-  display: "grid",
-  gridTemplateColumns: "1fr 3fr 2fr"
+  display: "flex",
+  alignItems: "baseline",
+  justifySelf :"center",
+  gap: "1.6rem",
+  width: "fit-content",
 };
 
-export const cssLOGO_BASE_TEXT = {
+export const cssLOGO_BASE_TEXT: CssMap = {
   gridColumn: "1",
   position: "relative",
   gridRow: "1",
@@ -184,12 +196,13 @@ export const SHADOW_LOGOcss: CssMap = {
   width: "fit-content",
   justifySelf: "center",
   pointerEvents: "none",
+  verticalAlign: "baseline",
 };
 
 export const cssMENU_BTN_TXT: CssMap = {
   ...cssMENU_FX,
   fontStyle: "normal",
-  margin: "1rem",
+  marginLeft: "1rem",
   letterSpacing: "1.9px",
   fontSize: _TXT.main,
   fontFamily: SPP_MENUfont,
@@ -197,6 +210,9 @@ export const cssMENU_BTN_TXT: CssMap = {
   cursor: "pointer",
   alignSelf: "center",
   ...cssGILT_TEXT,
+    display: "inline-block",
+  lineHeight: "1",
+  position: "relative",
   _hover: {
     borderTop: "2px solid " + OKLCH_ACID_WASHED.straw,
     borderBottom: "2px solid " + OKLCH_ACID_WASHED.straw,
